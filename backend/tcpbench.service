@@ -1,0 +1,15 @@
+[Unit]
+Description=TCP Bench backend
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+# 按你实际部署路径改
+WorkingDirectory=/opt/tcpbench/backend
+ExecStart=/opt/tcpbench/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=5
+User=www-data
+
+[Install]
+WantedBy=multi-user.target

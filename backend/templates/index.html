@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>TCP Bench · VPS 网络线路质量自助测试</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d;
+    --text: #c9d1d9; --dim: #8b949e; --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 16px; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  p.sub { color: var(--dim); margin-top: 0; }
+  .cmd-box {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px; display: flex; align-items: center; gap: 12px; margin: 24px 0;
+  }
+  .cmd-box code { flex: 1; color: #7ee787; font-size: 14px; overflow-x: auto; white-space: nowrap; }
+  .cmd-box button {
+    background: var(--accent); color: #fff; border: none; border-radius: 6px;
+    padding: 6px 14px; cursor: pointer; font-size: 13px; flex-shrink: 0;
+  }
+  .cmd-box button:active { opacity: 0.7; }
+  ul { color: var(--dim); line-height: 1.9; }
+  .footer { margin-top: 40px; color: var(--dim); font-size: 13px; }
+  .footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TCP Bench</h1>
+  <p class="sub">在你的 VPS 上跑一下，看看它到全球主流网站的 TCP 握手延迟怎么样。不用告诉我任何账号密码——脚本在你自己的机器上跑，结果由你自己决定要不要上传。</p>
+
+  <div class="cmd-box">
+    <code id="cmd">curl -sL {{ site_url }}/run.sh | bash</code>
+    <button onclick="copyCmd()">复制</button>
+  </div>
+
+  <ul>
+    <li>测试内容：对约 60 个主流站点做 TCP 端口 443 握手延迟测试，每个站点采样 60 次</li>
+    <li>脚本是纯 bash，不需要在 VPS 上装 Python，跑完自动把结果上传并给你一个报告链接</li>
+    <li>上传前会把 IP 后两段打码（如 <code>1.2.*.*</code>），不会存你的完整 IP</li>
+    <li>脚本内容公开，跑之前可以先看一眼源码再决定要不要执行</li>
+  </ul>
+
+  <div class="footer">
+    脚本源码见 <a href="{{ site_url }}/run.sh" target="_blank">/run.sh</a>　·　
+    来自 <a href="https://lucklog.cc" target="_blank">lucklog.cc</a>
+  </div>
+</div>
+<script>
+function copyCmd() {
+  navigator.clipboard.writeText(document.getElementById('cmd').textContent);
+  const btn = event.target;
+  const old = btn.textContent;
+  btn.textContent = '已复制';
+  setTimeout(() => btn.textContent = old, 1200);
+}
+</script>
+</body>
+</html>
