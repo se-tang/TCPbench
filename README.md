@@ -8,6 +8,10 @@ curl -sL https://tcpbench.com/run.sh | bash
 
 跑完会打印一个报告链接，打开就能看到每个站点的延迟表格，直接分享给别人看也没问题。
 
+# 或者从 GitHub 直接跑
+```bash
+curl -sL https://raw.githubusercontent.com/se-tang/tcpbench/main/backend/scripts/run.sh | BACKEND_URL=https://tcpbench.com bash
+```
 ## 这是干什么用的
 
 买 VPS 最容易踩坑的地方之一就是线路质量——同样标着"洛杉矶机房"，走 CN2 GIA 和走普通 BGP 出来的访问体验能差好几倍。TCP Bench 做的事情很简单：对 Google、GitHub、Netflix、Cloudflare 等约 60 个全球主流站点发起 TCP 握手（端口 443），记录每一次连接建立的耗时，最后给出一份延迟报告。
