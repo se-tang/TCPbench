@@ -28,7 +28,7 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 RUN_SH_PATH = os.path.join(BASE_DIR, "scripts", "run.sh")
 
 # ── 配置（部署时通过 .env / systemd Environment= 覆盖）──────────
-SITE_URL = os.getenv("SITE_URL", "https://bench.lucklog.cc")
+SITE_URL = os.getenv("SITE_URL", "https://tcpbench.com")
 REPORT_PORT = int(os.getenv("REPORT_PORT", "443"))     # 仅用于报告页展示，需和 run.sh 里的 PORT 保持一致
 REPORT_ROUNDS = int(os.getenv("REPORT_ROUNDS", "60"))  # 仅用于报告页展示，需和 run.sh 里的 ROUNDS 保持一致
 BLOG_URL = os.getenv("BLOG_URL", "")                    # 报告页左上角显示的博客署名链接，留空则不显示

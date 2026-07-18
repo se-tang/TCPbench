@@ -1,11 +1,11 @@
 #!/bin/bash
 # TCP Bench - VPS 网络线路质量自助测试
-# 用法: curl -sL https://bench.lucklog.cc/run.sh | bash
+# 用法: curl -sL https://tcpbench.com/run.sh | bash
 # 说明: 纯 bash 实现，用 /dev/tcp 做 TCP 连接计时，不需要安装任何依赖。
 #       测试结果会上传到 BACKEND_URL，只包含站点延迟数据和打码后的 IP。
 set -o pipefail
 
-BACKEND_URL="${BACKEND_URL:-https://bench.lucklog.cc}"
+BACKEND_URL="${BACKEND_URL:-__BACKEND_URL__}"
 ROUNDS=60
 TIMEOUT=5
 PORT=443
