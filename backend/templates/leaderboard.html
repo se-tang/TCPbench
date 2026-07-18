@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>排行榜 · TCP Bench</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d;
+    --text: #c9d1d9; --dim: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --orange: #d29922; --red: #f85149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 16px; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .top { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; }
+  h1 { font-size: 20px; margin: 0; }
+  p.sub { color: var(--dim); margin: 6px 0 20px; font-size: 13.5px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .tab {
+    font-size: 13px; padding: 6px 14px; border-radius: 6px; text-decoration: none;
+    color: var(--dim); background: var(--card); border: 1px solid var(--border);
+  }
+  .tab.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 13px; }
+  th { text-align: left; color: var(--dim); font-weight: 500; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
+  td { padding: 9px 12px; border-bottom: 1px solid #21262d; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1c2128; }
+  a.row-link { color: var(--text); text-decoration: none; }
+  a.row-link:hover { color: var(--accent); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .green { color: var(--green); } .orange { color: var(--orange); } .red { color: var(--red); } .gray { color: var(--dim); }
+  .empty { color: var(--dim); text-align: center; padding: 40px 0; }
+  .footer { margin-top: 24px; color: var(--dim); font-size: 12px; text-align: center; }
+  .footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>排行榜</h1>
+  </div>
+  <p class="sub">最近提交的测试结果，IP 已打码，可点击每一行查看完整报告。</p>
+
+  <div class="tabs">
+    <a class="tab {{ 'active' if sort == 'latency' else '' }}" href="/leaderboard?sort=latency">延迟最优</a>
+    <a class="tab {{ 'active' if sort == 'time' else '' }}" href="/leaderboard?sort=time">最新测试</a>
+  </div>
+
+  {% if items %}
+  <table>
+    <thead>
+      <tr>
+        <th>{{ '#' if sort == 'latency' else '主机' }}</th>
+        {% if sort == 'latency' %}<th>主机</th>{% endif %}
+        <th>IP</th>
+        <th class="num">平均延迟</th>
+        <th class="num">可达</th>
+        <th class="num">时间</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it in items %}
+      <tr>
+        {% if sort == 'latency' %}
+        <td class="num" style="color:var(--dim)">{{ loop.index }}</td>
+        <td><a class="row-link" href="/r/{{ it.id }}">{{ it.hostname }}</a></td>
+        {% else %}
+        <td><a class="row-link" href="/r/{{ it.id }}">{{ it.hostname }}</a></td>
+        {% endif %}
+        <td style="color:var(--dim)">{{ it.ip_masked }}</td>
+        <td class="num {{ it.cls }}">{{ "%.2f"|format(it.avg_all) + "ms" if it.avg_all is not none else "—" }}</td>
+        <td class="num" style="color:var(--dim)">{{ it.reachable }}/{{ it.total }}</td>
+        <td class="num" style="color:var(--dim)">{{ it.submitted_at.strftime("%m-%d %H:%M") }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">还没有人提交测试结果</div>
+  {% endif %}
+
+  <div class="footer">
+    <a href="/">自己也测一下</a>　·　来自 <a href="https://lucklog.cc" target="_blank">lucklog.cc</a>
+  </div>
+</div>
+</body>
+</html>

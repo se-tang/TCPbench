@@ -110,8 +110,11 @@ def create_report(payload: ReportIn, request: Request, db: Session = Depends(get
     while db.query(Report).filter(Report.id == report_id).first():
         report_id = secrets.token_urlsafe(8).replace("_", "").replace("-", "")[:8]
 
+    owner_token = secrets.token_urlsafe(16)
+
     report = Report(
         id=report_id,
+        owner_token=owner_token,
         hostname=payload.hostname[:128],
         ip_masked=mask_ip(payload.ip),
         submitted_at=datetime.datetime.utcnow(),
@@ -123,7 +126,7 @@ def create_report(payload: ReportIn, request: Request, db: Session = Depends(get
     db.add(report)
     db.commit()
 
-    return ReportOut(id=report_id, url=f"{SITE_URL}/r/{report_id}")
+    return ReportOut(id=report_id, url=f"{SITE_URL}/r/{report_id}?token={owner_token}")
 
 
 def spark_path(samples, w=130, h=32):
@@ -156,11 +159,47 @@ def lat_cls(avg):
     return "red"
 
 
+@app.get("/leaderboard", response_class=HTMLResponse)
+def leaderboard(request: Request, sort: str = "latency", db: Session = Depends(get_db)):
+    if sort not in ("latency", "time"):
+        sort = "latency"
+
+    query = db.query(Report)
+    if sort == "time":
+        query = query.order_by(Report.submitted_at.desc())
+    else:
+        query = query.filter(Report.avg_all.isnot(None)).order_by(Report.avg_all.asc())
+
+    rows = query.limit(50).all()
+
+    items = [
+        {
+            "id": r.id,
+            "hostname": r.hostname,
+            "ip_masked": r.ip_masked,
+            "avg_all": r.avg_all,
+            "reachable": r.reachable,
+            "total": r.total,
+            "submitted_at": r.submitted_at,
+            "cls": lat_cls(r.avg_all),
+        }
+        for r in rows
+    ]
+
+    return templates.TemplateResponse(
+        request,
+        "leaderboard.html",
+        {"items": items, "sort": sort, "site_url": SITE_URL},
+    )
+
+
 @app.get("/r/{report_id}", response_class=HTMLResponse)
-def view_report(report_id: str, request: Request, db: Session = Depends(get_db)):
+def view_report(report_id: str, request: Request, token: str = None, db: Session = Depends(get_db)):
     report = db.query(Report).filter(Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="报告不存在或已过期")
+
+    is_owner = bool(token) and bool(report.owner_token) and token == report.owner_token
 
     sorted_results = sorted(
         report.raw, key=lambda r: (r["avg"] is None, r["avg"] if r["avg"] is not None else 0)
@@ -199,6 +238,7 @@ def view_report(report_id: str, request: Request, db: Session = Depends(get_db))
             "port": REPORT_PORT,
             "rounds": REPORT_ROUNDS,
             "blog_url": BLOG_URL,
+            "is_owner": is_owner,
         },
     )
 

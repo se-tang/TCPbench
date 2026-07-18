@@ -61,7 +61,7 @@ td{padding:7px 14px;white-space:nowrap}
   <div>
     <h1>常见网站 TCP ping 延迟测试</h1>
     <div class="meta">
-      <span>by {{ report.hostname }}</span>
+      </span><span>by TCPbench.com</span>
       {% if blog_url %}<span><a href="{{ blog_url }}" style="color:var(--t3);text-decoration:none" target="_blank">{{ blog_url|replace("https://","")|replace("http://","") }}</a></span>{% endif %}
       <span>IP：{{ report.ip_masked }}</span>
       <span>时间：{{ report.submitted_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
@@ -72,7 +72,7 @@ td{padding:7px 14px;white-space:nowrap}
   </div>
   <div class="hd-actions">
     <span class="badge">测试完成</span>
-    <button class="btn-export" id="exportBtn">导出图片</button>
+    {% if is_owner %}<button class="btn-export" id="exportBtn">导出图片</button>{% endif %}
   </div>
 </div>
 <div class="cards">
@@ -141,9 +141,10 @@ td{padding:7px 14px;white-space:nowrap}
 </div>
 </div><!-- /capture -->
 
-<div class="own-test">自己也想测测？<a href="/">在自己的 VPS 上跑一下</a></div>
+<div class="own-test">自己也想测测？<a href="/">在自己的 VPS 上跑一下</a>　·　<a href="/leaderboard">查看排行榜</a></div>
 </div>
 
+{% if is_owner %}
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 document.getElementById('exportBtn').addEventListener('click', function () {
@@ -168,5 +169,6 @@ document.getElementById('exportBtn').addEventListener('click', function () {
   });
 });
 </script>
+{% endif %}
 </body>
 </html>

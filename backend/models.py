@@ -8,6 +8,7 @@ class Report(Base):
     __tablename__ = "reports"
 
     id = Column(String(16), primary_key=True)          # 短 ID，用于 /r/<id>
+    owner_token = Column(String(32), nullable=True)      # 机主令牌，只有跑测试拿到的直链才带这个
     hostname = Column(String(128))
     ip_masked = Column(String(64))                       # 后两段打码后的 IP
     submitted_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
