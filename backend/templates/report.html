@@ -2,92 +2,171 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>{{ report.hostname }} · TCP Bench 报告</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TCP Ping 报告 · {{ report.hostname }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0d1117; --card: #161b22; --border: #30363d;
-    --text: #c9d1d9; --dim: #8b949e; --accent: #58a6ff;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 32px 16px; background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  }
-  .wrap { max-width: 860px; margin: 0 auto; }
-  .header {
-    display: flex; justify-content: space-between; align-items: baseline;
-    border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
-  }
-  .header h1 { font-size: 20px; margin: 0; }
-  .header .meta { color: var(--dim); font-size: 13px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { text-align: left; color: var(--dim); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-  td { padding: 8px 10px; border-bottom: 1px solid #21262d; }
-  tr:hover td { background: #1c2128; }
-  .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .legend { display: flex; gap: 20px; margin-top: 16px; color: var(--dim); font-size: 12px; flex-wrap: wrap; }
-  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-  .footer { margin-top: 32px; color: var(--dim); font-size: 12px; text-align: center; }
-  .footer a { color: var(--accent); text-decoration: none; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f8fa;--surface:#fff;--border:#e4e7ed;--border-faint:#f0f2f5;
+  --t1:#1a1d23;--t2:#6b7280;--t3:#9ca3af;
+  --green:#16a34a;--orange:#ea580c;--red:#dc2626;--blue:#2563eb;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans SC','PingFang SC',system-ui,sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);font-size:13px;padding:28px 36px 56px;min-height:100vh}
+.page{max-width:1120px;margin:0 auto}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:16px;flex-wrap:wrap}
+.hd h1{font-size:15px;font-weight:500;letter-spacing:.01em;margin-bottom:5px}
+.meta{font-size:11.5px;color:var(--t3);font-family:var(--mono);display:flex;gap:16px;flex-wrap:wrap}
+.meta span{white-space:nowrap}
+.hd-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.badge{font-family:var(--sans);font-size:11.5px;font-weight:500;padding:5px 14px;border-radius:5px;background:#f0f2f5;color:var(--t2);border:1px solid var(--border);white-space:nowrap}
+.btn-export{font-family:var(--sans);font-size:11.5px;font-weight:500;padding:5px 14px;border-radius:5px;background:var(--t1);color:#fff;border:none;white-space:nowrap;cursor:pointer}
+.btn-export:active{opacity:.75}
+.cards{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 16px;min-width:120px}
+.card-label{font-size:11px;color:var(--t3);margin-bottom:4px;letter-spacing:.03em}
+.card-value{font-size:19px;font-weight:500;font-family:var(--mono)}
+.card-value.green{color:var(--green)}.card-value.orange{color:var(--orange)}.card-value.red{color:var(--red)}
+.card-sub{font-size:12px;color:var(--t3);margin-top:2px}
+.wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{background:#fafbfc;padding:9px 14px;text-align:left;font-size:11.5px;font-weight:500;color:var(--t2);border-bottom:1px solid var(--border);white-space:nowrap;letter-spacing:.02em}
+thead th.c-avg{color:var(--t1)}
+thead th.c-rank{width:38px;text-align:center}
+tbody tr{border-bottom:1px solid var(--border-faint)}
+tbody tr:last-child{border-bottom:none}
+td{padding:7px 14px;white-space:nowrap}
+.c-rank{text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px}
+.c-name{font-weight:500;font-size:13px}
+.c-avg{font-family:var(--mono);font-weight:500;font-size:12.5px}
+.c-num{font-family:var(--mono);font-size:12px;color:var(--t2)}
+.c-loss{font-family:var(--mono);font-size:12px;color:var(--t2)}
+.c-spark{padding:0 14px 0 6px;width:148px;vertical-align:middle}
+.lat-green{color:var(--green)}.lat-orange{color:var(--orange)}.lat-red{color:var(--red)}.lat-gray{color:var(--t3)}
+.loss-mid{color:var(--orange)}.loss-high{color:var(--red)}
+.footer{margin-top:16px;font-size:11px;color:var(--t3);font-family:var(--mono);display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+.leg{display:flex;align-items:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.own-test{margin-top:22px;font-size:12px;color:var(--t3);text-align:center}
+.own-test a{color:var(--blue);text-decoration:none}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="header">
-    <div>
-      <h1>{{ report.hostname }}</h1>
-      <div class="meta">{{ report.ip_masked }} · {{ report.submitted_at.strftime("%Y-%m-%d %H:%M UTC") }}</div>
-    </div>
+<div class="page">
+<div id="capture">
+<div class="hd">
+  <div>
+    <h1>常见网站 TCP ping 延迟测试</h1>
     <div class="meta">
-      {% if report.avg_all %}整体平均 <b style="color:#c9d1d9">{{ "%.2f"|format(report.avg_all) }}ms</b> ·{% endif %}
-      可达 {{ report.reachable }}/{{ report.total }}
+      <span>by {{ report.hostname }}</span>
+      {% if blog_url %}<span><a href="{{ blog_url }}" style="color:var(--t3);text-decoration:none" target="_blank">{{ blog_url|replace("https://","")|replace("http://","") }}</a></span>{% endif %}
+      <span>IP：{{ report.ip_masked }}</span>
+      <span>时间：{{ report.submitted_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
+      <span>端口：{{ port }}</span>
+      <span>轮次：{{ rounds }}</span>
+      <span>站点：{{ total }}</span>
     </div>
   </div>
-
+  <div class="hd-actions">
+    <span class="badge">测试完成</span>
+    <button class="btn-export" id="exportBtn">导出图片</button>
+  </div>
+</div>
+<div class="cards">
+  <div class="card">
+    <div class="card-label">整体平均延迟</div>
+    <div class="card-value {{ overall_cls }}">{{ "%.2f"|format(overall_avg) + "ms" if overall_avg is not none else "—" }}</div>
+  </div>
+  <div class="card">
+    <div class="card-label">可达站点</div>
+    <div class="card-value">{{ reachable }}<span class="card-sub"> / {{ total }}</span></div>
+  </div>
+  <div class="card">
+    <div class="card-label">最快</div>
+    <div class="card-value green" style="font-size:15px">{{ best.name if best else "—" }}</div>
+    <div class="card-sub">{{ "%.2f"|format(best.avg) + "ms" if best else "" }}</div>
+  </div>
+  <div class="card">
+    <div class="card-label">最慢（可达）</div>
+    <div class="card-value red" style="font-size:15px">{{ worst.name if worst else "—" }}</div>
+    <div class="card-sub">{{ "%.2f"|format(worst.avg) + "ms" if worst else "" }}</div>
+  </div>
+</div>
+<div class="wrap">
   <table>
     <thead>
       <tr>
-        <th>站点</th>
-        <th class="num">平均</th>
-        <th class="num">最低</th>
-        <th class="num">最高</th>
-        <th class="num">成功</th>
-        <th class="num">丢包</th>
+        <th class="c-rank">#</th>
+        <th>服务</th>
+        <th class="c-avg">平均</th>
+        <th>最小</th>
+        <th>最大</th>
+        <th>成功</th>
+        <th>丢包</th>
         <th>趋势</th>
       </tr>
     </thead>
     <tbody>
       {% for r in rows %}
       <tr>
-        <td>{{ r.name }}</td>
-        <td class="num" style="color:{{ r.color }}">{{ "%.2f"|format(r.avg) + "ms" if r.avg is not none else "超时" }}</td>
-        <td class="num">{{ "%.2f"|format(r.min) if r.min is not none else "-" }}</td>
-        <td class="num">{{ "%.2f"|format(r.max) if r.max is not none else "-" }}</td>
-        <td class="num">{{ r.success }}/{{ r.total }}</td>
-        <td class="num">{{ "%.1f"|format(r.loss_pct) }}%</td>
-        <td>
+        <td class="c-rank">{{ r.rank }}</td>
+        <td class="c-name">{{ r.name }}</td>
+        <td class="c-avg lat-{{ r.cls }}">{{ r.avg_str }}</td>
+        <td class="c-num">{{ r.min_str }}</td>
+        <td class="c-num">{{ r.max_str }}</td>
+        <td class="c-num">{{ r.success }}</td>
+        <td class="c-loss {{ 'loss-' + r.loss_cls if r.loss_cls else '' }}">{{ r.loss_str }}</td>
+        <td class="c-spark">
           {% if r.spark %}
-          <svg width="110" height="26" viewBox="0 0 110 26">
-            <polyline points="{{ r.spark }}" fill="none" stroke="{{ r.color }}" stroke-width="1.2"/>
+          <svg width="130" height="32" viewBox="0 0 130 32" style="display:block">
+            <path d="{{ r.spark }}" fill="none" stroke="{{ {'green':'#16a34a','orange':'#ea580c','red':'#dc2626','gray':'#94a3b8'}[r.cls] }}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/>
           </svg>
+          {% else %}
+          <span style="color:#cbd5e1">—</span>
           {% endif %}
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-
-  <div class="legend">
-    <span><span class="dot" style="background:#3fb950"></span>&lt;50ms 优秀</span>
-    <span><span class="dot" style="background:#d29922"></span>50–150ms 正常</span>
-    <span><span class="dot" style="background:#f85149"></span>&gt;150ms 较慢</span>
-    <span>TCP SYN→ACK 握手延迟 · 按平均延迟升序排列</span>
-  </div>
-
-  <div class="footer">
-    自己也想测测？<a href="/">在自己的 VPS 上跑一下</a>　·　来自 <a href="https://lucklog.cc" target="_blank">lucklog.cc</a>
-  </div>
 </div>
+<div class="footer">
+  <div class="leg"><span class="dot" style="background:var(--green)"></span>&lt;50ms 优秀</div>
+  <div class="leg"><span class="dot" style="background:var(--orange)"></span>50–150ms 正常</div>
+  <div class="leg"><span class="dot" style="background:var(--red)"></span>&gt;150ms 较慢</div>
+  <span>· TCP SYN→ACK 握手延迟 · 结果按平均延迟升序排列</span>
+</div>
+</div><!-- /capture -->
+
+<div class="own-test">自己也想测测？<a href="/">在自己的 VPS 上跑一下</a></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+document.getElementById('exportBtn').addEventListener('click', function () {
+  var btn = this;
+  var original = btn.textContent;
+  btn.textContent = '生成中...';
+  btn.disabled = true;
+  html2canvas(document.getElementById('capture'), {
+    backgroundColor: '#f7f8fa',
+    scale: 2,
+    useCORS: true
+  }).then(function (canvas) {
+    var link = document.createElement('a');
+    link.download = 'tcpping-{{ report.hostname }}.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    btn.textContent = original;
+    btn.disabled = false;
+  }).catch(function () {
+    btn.textContent = '导出失败';
+    setTimeout(function () { btn.textContent = original; btn.disabled = false; }, 1500);
+  });
+});
+</script>
 </body>
 </html>

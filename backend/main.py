@@ -29,6 +29,9 @@ RUN_SH_PATH = os.path.join(BASE_DIR, "scripts", "run.sh")
 
 # ── 配置（部署时通过 .env / systemd Environment= 覆盖）──────────
 SITE_URL = os.getenv("SITE_URL", "https://bench.lucklog.cc")
+REPORT_PORT = int(os.getenv("REPORT_PORT", "443"))     # 仅用于报告页展示，需和 run.sh 里的 PORT 保持一致
+REPORT_ROUNDS = int(os.getenv("REPORT_ROUNDS", "60"))  # 仅用于报告页展示，需和 run.sh 里的 ROUNDS 保持一致
+BLOG_URL = os.getenv("BLOG_URL", "")                    # 报告页左上角显示的博客署名链接，留空则不显示
 MAX_BODY_BYTES = 2 * 1024 * 1024      # 单次上报最大 2MB
 RATE_LIMIT_COUNT = int(os.getenv("RATE_LIMIT_COUNT", "5"))       # 每 IP 每小时最多提交次数
 RATE_LIMIT_WINDOW_MIN = int(os.getenv("RATE_LIMIT_WINDOW_MIN", "60"))
@@ -84,9 +87,12 @@ def index(request: Request):
 
 @app.get("/run.sh", response_class=PlainTextResponse)
 def run_script():
-    """curl -sL https://bench.lucklog.cc/run.sh | bash 就是拉这个"""
+    """curl -sL <你的域名>/run.sh | bash 就是拉这个。
+    仓库里 run.sh 用的是占位符 __BACKEND_URL__，这里用 .env 里的 SITE_URL 动态替换，
+    这样代码传到 GitHub 上不会写死你的真实域名，部署到哪台服务器就自动指向哪个域名。"""
     with open(RUN_SH_PATH, "r", encoding="utf-8") as f:
-        return f.read()
+        content = f.read()
+    return content.replace("__BACKEND_URL__", SITE_URL)
 
 
 @app.post("/api/report", response_model=ReportOut)
@@ -120,46 +126,80 @@ def create_report(payload: ReportIn, request: Request, db: Session = Depends(get
     return ReportOut(id=report_id, url=f"{SITE_URL}/r/{report_id}")
 
 
+def spark_path(samples, w=130, h=32):
+    """还原初版脚本里的 sparkline 绘制逻辑：SVG path 的 M/L 命令，遇到 None 就断开"""
+    valid = [v for v in samples if v is not None]
+    if len(valid) < 2:
+        return ""
+    mn, mx = min(valid), max(valid)
+    rng = (mx - mn) or 1
+    step = w / (len(samples) - 1) if len(samples) > 1 else 0
+    d, first = [], True
+    for i, v in enumerate(samples):
+        if v is None:
+            first = True
+            continue
+        x = round(i * step, 1)
+        y = round(h - 2 - ((v - mn) / rng) * (h - 4), 1)
+        d.append(f"{'M' if first else 'L'}{x},{y}")
+        first = False
+    return "".join(d)
+
+
+def lat_cls(avg):
+    if avg is None:
+        return "gray"
+    if avg < 50:
+        return "green"
+    if avg < 150:
+        return "orange"
+    return "red"
+
+
 @app.get("/r/{report_id}", response_class=HTMLResponse)
 def view_report(report_id: str, request: Request, db: Session = Depends(get_db)):
     report = db.query(Report).filter(Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="报告不存在或已过期")
 
-    def color_for(avg):
-        if avg is None:
-            return "#8b949e"
-        if avg < 50:
-            return "#3fb950"
-        if avg < 150:
-            return "#d29922"
-        return "#f85149"
+    sorted_results = sorted(
+        report.raw, key=lambda r: (r["avg"] is None, r["avg"] if r["avg"] is not None else 0)
+    )
+    ok = [r for r in sorted_results if r["avg"] is not None]
+    overall_avg = round(sum(r["avg"] for r in ok) / len(ok), 2) if ok else None
 
-    def sparkline_points(samples, w=110, h=26):
-        valid = [(i, s) for i, s in enumerate(samples) if s is not None]
-        if len(valid) < 2:
-            return ""
-        vals = [v for _, v in valid]
-        mn, mx = min(vals), max(vals)
-        rng = (mx - mn) or 1
-        pts = []
-        n = len(samples) - 1 or 1
-        for i, s in valid:
-            x = i / n * w
-            y = h - ((s - mn) / rng) * h
-            pts.append(f"{x:.1f},{y:.1f}")
-        return " ".join(pts)
-
-    rows = sorted(report.raw, key=lambda r: (r["avg"] is None, r["avg"] if r["avg"] is not None else 0))
-    rows = [
-        {**r, "color": color_for(r["avg"]), "spark": sparkline_points(r["samples"])}
-        for r in rows
-    ]
+    rows = []
+    for i, r in enumerate(sorted_results):
+        loss = r["loss_pct"]
+        rows.append({
+            "rank": i + 1,
+            "name": r["name"],
+            "avg_str": f"{r['avg']:.2f}ms" if r["avg"] is not None else "—",
+            "min_str": f"{r['min']:.3f}ms" if r["min"] is not None else "—",
+            "max_str": f"{r['max']:.3f}ms" if r["max"] is not None else "—",
+            "success": r["success"],
+            "loss_str": f"{loss:.2f}%" if loss > 0 else "0%",
+            "loss_cls": "high" if loss >= 50 else ("mid" if loss > 0 else ""),
+            "cls": lat_cls(r["avg"]),
+            "spark": spark_path(r["samples"]),
+        })
 
     return templates.TemplateResponse(
         request,
         "report.html",
-        {"report": report, "rows": rows},
+        {
+            "report": report,
+            "rows": rows,
+            "overall_avg": overall_avg,
+            "overall_cls": lat_cls(overall_avg),
+            "reachable": len(ok),
+            "total": len(sorted_results),
+            "best": ok[0] if ok else None,
+            "worst": ok[-1] if ok else None,
+            "port": REPORT_PORT,
+            "rounds": REPORT_ROUNDS,
+            "blog_url": BLOG_URL,
+        },
     )
 
 
