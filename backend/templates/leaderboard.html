@@ -110,7 +110,7 @@
         <td class="num" style="color:var(--dim)">{{ it.submitted_at_str }}</td>
       </tr>
       {% endfor %}
-      {% set filler_count = page_size - items|length %}
+      {% set filler_count = 20 - items|length %}
       {% if filler_count > 0 %}
         {% for _ in range(filler_count) %}
         <tr class="filler"><td colspan="6">&nbsp;</td></tr>
