@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>排行榜 · TCP Bench</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script>
 // 尽早读取主题偏好并设置，避免切到深色前先闪一下浅色
@@ -109,7 +110,7 @@
         <td class="num" style="color:var(--dim)">{{ it.submitted_at_str }}</td>
       </tr>
       {% endfor %}
-      {% set filler_count = 20 - items|length %}
+      {% set filler_count = page_size - items|length %}
       {% if filler_count > 0 %}
         {% for _ in range(filler_count) %}
         <tr class="filler"><td colspan="6">&nbsp;</td></tr>

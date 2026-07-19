@@ -1,0 +1,56 @@
+/* 深色（默认） */
+:root {
+  --bg: #0d1117;
+  --card: #161b22;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --dim: #8b949e;
+  --accent: #58a6ff;
+}
+
+/* 浅色 */
+[data-theme="light"] {
+  --bg: #ffffff;
+  --card: #f6f8fa;
+  --border: #d0d7de;
+  --text: #1f2328;
+  --dim: #57606a;
+  --accent: #0969da;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  transition: background .15s ease, color .15s ease;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.theme-toggle, .action-btn {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.theme-toggle:hover, .action-btn:hover { opacity: .8; }
+
+.brand-row {
+  font-size: 13px;
+  color: var(--dim);
+  margin-bottom: 14px;
+}
+.brand-row b { color: var(--text); }
+.brand-row a { color: var(--accent); text-decoration: none; }
+
+.table-wrap { overflow-x: auto; }
