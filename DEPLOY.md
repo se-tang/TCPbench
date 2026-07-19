@@ -38,7 +38,7 @@ tcpbench/
   nginx/tcpbench.conf         OpenResty 反代配置示例
 ```
 
-## 部署步骤（按你现在 1Panel + PostgreSQL 的环境）
+## 部署步骤（按 1Panel + PostgreSQL 的环境）
 
 ### 1. 建数据库
 
@@ -77,7 +77,7 @@ uvicorn main:app --host 127.0.0.1 --port 8000
 
 `Ctrl+C` 停掉，准备用 systemd 常驻。
 
-### 6. 配置 systemd（跟你部署 Telegram bot 是一个路子）
+### 6. 配置 systemd
 
 ```bash
 sudo cp tcpbench.service /etc/systemd/system/
