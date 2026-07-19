@@ -1,6 +1,7 @@
 import os
 import secrets
 import datetime
+import math
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -33,6 +34,32 @@ REPORT_PORT = int(os.getenv("REPORT_PORT", "443"))     # 仅用于报告页展�
 REPORT_ROUNDS = int(os.getenv("REPORT_ROUNDS", "60"))  # 仅用于报告页展示，需和 run.sh 里的 ROUNDS 保持一致
 BLOG_URL = os.getenv("BLOG_URL", "")                    # 报告页左上角显示的博客署名链接，留空则不显示
 MAX_BODY_BYTES = 2 * 1024 * 1024      # 单次上报最大 2MB
+LEADERBOARD_PAGE_SIZE = int(os.getenv("LEADERBOARD_PAGE_SIZE", "20"))  # 排行榜每页展示条数
+CN_TZ_OFFSET = datetime.timedelta(hours=8)   # 中国不实行夏令时，固定 UTC+8 换算就够用，不用引入 zoneinfo
+
+
+def to_cn_str(dt: datetime.datetime) -> str:
+    """数据库里存的是 UTC，这里统一换算成北京时间用于展示"""
+    return (dt + CN_TZ_OFFSET).strftime("%Y-%m-%d %H:%M")
+
+
+def build_page_list(current: int, total: int):
+    """生成分页导航要显示的页码列表，页数多的时候用 None 表示省略号"""
+    if total <= 7:
+        return list(range(1, total + 1))
+    pages = {1, total, current}
+    for d in (-1, 0, 1):
+        p = current + d
+        if 1 <= p <= total:
+            pages.add(p)
+    pages = sorted(pages)
+    result, prev = [], None
+    for p in pages:
+        if prev is not None and p - prev > 1:
+            result.append(None)
+        result.append(p)
+        prev = p
+    return result
 RATE_LIMIT_COUNT = int(os.getenv("RATE_LIMIT_COUNT", "5"))       # 每 IP 每小时最多提交次数
 RATE_LIMIT_WINDOW_MIN = int(os.getenv("RATE_LIMIT_WINDOW_MIN", "60"))
 
@@ -160,36 +187,56 @@ def lat_cls(avg):
 
 
 @app.get("/leaderboard", response_class=HTMLResponse)
-def leaderboard(request: Request, sort: str = "latency", db: Session = Depends(get_db)):
+def leaderboard(request: Request, sort: str = "latency", page: int = 1, db: Session = Depends(get_db)):
     if sort not in ("latency", "time"):
         sort = "latency"
+    if page < 1:
+        page = 1
 
-    query = db.query(Report)
+    base_query = db.query(Report)
+    if sort == "latency":
+        base_query = base_query.filter(Report.avg_all.isnot(None))
+
+    total_count = base_query.count()
+    total_pages = max(1, math.ceil(total_count / LEADERBOARD_PAGE_SIZE))
+    if page > total_pages:
+        page = total_pages
+
     if sort == "time":
-        query = query.order_by(Report.submitted_at.desc())
+        base_query = base_query.order_by(Report.submitted_at.desc())
     else:
-        query = query.filter(Report.avg_all.isnot(None)).order_by(Report.avg_all.asc())
+        base_query = base_query.order_by(Report.avg_all.asc())
 
-    rows = query.limit(50).all()
+    rows = base_query.offset((page - 1) * LEADERBOARD_PAGE_SIZE).limit(LEADERBOARD_PAGE_SIZE).all()
+    rank_offset = (page - 1) * LEADERBOARD_PAGE_SIZE
 
     items = [
         {
+            "rank": rank_offset + i + 1,
             "id": r.id,
             "hostname": r.hostname,
             "ip_masked": r.ip_masked,
             "avg_all": r.avg_all,
             "reachable": r.reachable,
             "total": r.total,
-            "submitted_at": r.submitted_at,
+            "submitted_at_str": to_cn_str(r.submitted_at),
             "cls": lat_cls(r.avg_all),
         }
-        for r in rows
+        for i, r in enumerate(rows)
     ]
 
     return templates.TemplateResponse(
         request,
         "leaderboard.html",
-        {"items": items, "sort": sort, "site_url": SITE_URL},
+        {
+            "items": items,
+            "sort": sort,
+            "site_url": SITE_URL,
+            "total_count": total_count,
+            "page": page,
+            "total_pages": total_pages,
+            "page_list": build_page_list(page, total_pages),
+        },
     )
 
 
@@ -239,6 +286,7 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
             "rounds": REPORT_ROUNDS,
             "blog_url": BLOG_URL,
             "is_owner": is_owner,
+            "submitted_at_str": to_cn_str(report.submitted_at),
         },
     )
 

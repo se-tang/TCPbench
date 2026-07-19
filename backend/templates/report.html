@@ -61,10 +61,10 @@ td{padding:7px 14px;white-space:nowrap}
   <div>
     <h1>常见网站 TCP ping 延迟测试</h1>
     <div class="meta">
-      </span><span>by TCPbench.com</span>
+      <span>by {{ report.hostname }}</span>
       {% if blog_url %}<span><a href="{{ blog_url }}" style="color:var(--t3);text-decoration:none" target="_blank">{{ blog_url|replace("https://","")|replace("http://","") }}</a></span>{% endif %}
       <span>IP：{{ report.ip_masked }}</span>
-      <span>时间：{{ report.submitted_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
+      <span>时间：{{ submitted_at_str }} (UTC+8)</span>
       <span>端口：{{ port }}</span>
       <span>轮次：{{ rounds }}</span>
       <span>站点：{{ total }}</span>

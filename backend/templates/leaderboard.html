@@ -4,21 +4,44 @@
 <meta charset="UTF-8">
 <title>排行榜 · TCP Bench</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+// 尽早读取主题偏好并设置，避免切到深色前先闪一下浅色
+(function(){
+  try {
+    var t = localStorage.getItem('tcpbench-theme');
+    if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  } catch (e) {}
+})();
+</script>
 <style>
   :root {
+    --bg: #f7f8fa; --card: #fff; --border: #e4e7ed;
+    --text: #1a1d23; --dim: #6b7280; --accent: #2563eb;
+    --green: #16a34a; --orange: #ea580c; --red: #dc2626;
+    --row-hover: #f5f6f8;
+  }
+  html[data-theme="dark"] {
     --bg: #0d1117; --card: #161b22; --border: #30363d;
     --text: #c9d1d9; --dim: #8b949e; --accent: #58a6ff;
     --green: #3fb950; --orange: #d29922; --red: #f85149;
+    --row-hover: #1c2128;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0; padding: 40px 16px; background: var(--bg); color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    transition: background .15s, color .15s;
   }
-  .wrap { max-width: 720px; margin: 0 auto; }
-  .top { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; }
   h1 { font-size: 20px; margin: 0; }
-  p.sub { color: var(--dim); margin: 6px 0 20px; font-size: 13.5px; }
+  .theme-btn {
+    background: var(--card); border: 1px solid var(--border); color: var(--dim);
+    border-radius: 6px; padding: 6px 12px; font-size: 12.5px; cursor: pointer;
+  }
+  .theme-btn:active { opacity: .7; }
+  p.sub { color: var(--dim); margin: 6px 0 4px; font-size: 13.5px; }
+  p.count { color: var(--dim); margin: 0 0 18px; font-size: 12px; }
   .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
   .tab {
     font-size: 13px; padding: 6px 14px; border-radius: 6px; text-decoration: none;
@@ -26,15 +49,25 @@
   }
   .tab.active { color: #fff; background: var(--accent); border-color: var(--accent); }
   table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 13px; }
-  th { text-align: left; color: var(--dim); font-weight: 500; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
-  td { padding: 9px 12px; border-bottom: 1px solid #21262d; }
+  th { text-align: left; color: var(--dim); font-weight: 500; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #1c2128; }
+  tr:hover td { background: var(--row-hover); }
+  tr.filler td { border-bottom-color: transparent; color: transparent; user-select: none; pointer-events: none; }
   a.row-link { color: var(--text); text-decoration: none; }
   a.row-link:hover { color: var(--accent); }
-  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
   .green { color: var(--green); } .orange { color: var(--orange); } .red { color: var(--red); } .gray { color: var(--dim); }
   .empty { color: var(--dim); text-align: center; padding: 40px 0; }
+  html { scroll-behavior: smooth; }
+  .pager { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 20px; flex-wrap: wrap; scroll-margin-top: 24px; }
+  .pager a, .pager span {
+    min-width: 30px; text-align: center; padding: 5px 8px; border-radius: 6px; font-size: 12.5px;
+    text-decoration: none; color: var(--dim); border: 1px solid var(--border); background: var(--card);
+  }
+  .pager a:hover { color: var(--accent); }
+  .pager .current { color: #fff; background: var(--accent); border-color: var(--accent); }
+  .pager .ellipsis { border: none; background: none; }
   .footer { margin-top: 24px; color: var(--dim); font-size: 12px; text-align: center; }
   .footer a { color: var(--accent); text-decoration: none; }
 </style>
@@ -43,8 +76,10 @@
 <div class="wrap">
   <div class="top">
     <h1>排行榜</h1>
+    <button class="theme-btn" id="themeBtn">🌙 深色</button>
   </div>
   <p class="sub">最近提交的测试结果，IP 已打码，可点击每一行查看完整报告。</p>
+  <p class="count">共 {{ total_count }} 条记录，第 {{ page }} / {{ total_pages }} 页</p>
 
   <div class="tabs">
     <a class="tab {{ 'active' if sort == 'latency' else '' }}" href="/leaderboard?sort=latency">延迟最优</a>
@@ -55,8 +90,8 @@
   <table>
     <thead>
       <tr>
-        <th>{{ '#' if sort == 'latency' else '主机' }}</th>
-        {% if sort == 'latency' %}<th>主机</th>{% endif %}
+        <th>#</th>
+        <th>主机</th>
         <th>IP</th>
         <th class="num">平均延迟</th>
         <th class="num">可达</th>
@@ -66,20 +101,36 @@
     <tbody>
       {% for it in items %}
       <tr>
-        {% if sort == 'latency' %}
-        <td class="num" style="color:var(--dim)">{{ loop.index }}</td>
+        <td class="num" style="color:var(--dim)">{{ it.rank }}</td>
         <td><a class="row-link" href="/r/{{ it.id }}">{{ it.hostname }}</a></td>
-        {% else %}
-        <td><a class="row-link" href="/r/{{ it.id }}">{{ it.hostname }}</a></td>
-        {% endif %}
         <td style="color:var(--dim)">{{ it.ip_masked }}</td>
         <td class="num {{ it.cls }}">{{ "%.2f"|format(it.avg_all) + "ms" if it.avg_all is not none else "—" }}</td>
         <td class="num" style="color:var(--dim)">{{ it.reachable }}/{{ it.total }}</td>
-        <td class="num" style="color:var(--dim)">{{ it.submitted_at.strftime("%m-%d %H:%M") }}</td>
+        <td class="num" style="color:var(--dim)">{{ it.submitted_at_str }}</td>
       </tr>
       {% endfor %}
+      {% set filler_count = 20 - items|length %}
+      {% if filler_count > 0 %}
+        {% for _ in range(filler_count) %}
+        <tr class="filler"><td colspan="6">&nbsp;</td></tr>
+        {% endfor %}
+      {% endif %}
     </tbody>
   </table>
+
+  {% if total_pages > 1 %}
+  <div class="pager" id="pager">
+    {% if page > 1 %}<a href="/leaderboard?sort={{ sort }}&page={{ page - 1 }}#pager">‹</a>{% endif %}
+    {% for p in page_list %}
+      {% if p is none %}<span class="ellipsis">…</span>
+      {% elif p == page %}<span class="current">{{ p }}</span>
+      {% else %}<a href="/leaderboard?sort={{ sort }}&page={{ p }}#pager">{{ p }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page < total_pages %}<a href="/leaderboard?sort={{ sort }}&page={{ page + 1 }}#pager">›</a>{% endif %}
+  </div>
+  {% endif %}
+
   {% else %}
   <div class="empty">还没有人提交测试结果</div>
   {% endif %}
@@ -88,5 +139,26 @@
     <a href="/">自己也测一下</a>　·　来自 <a href="https://lucklog.cc" target="_blank">lucklog.cc</a>
   </div>
 </div>
+<script>
+(function () {
+  var btn = document.getElementById('themeBtn');
+  function sync() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = isDark ? '☀️ 浅色' : '🌙 深色';
+  }
+  sync();
+  btn.addEventListener('click', function () {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      try { localStorage.setItem('tcpbench-theme', 'light'); } catch (e) {}
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      try { localStorage.setItem('tcpbench-theme', 'dark'); } catch (e) {}
+    }
+    sync();
+  });
+})();
+</script>
 </body>
 </html>
