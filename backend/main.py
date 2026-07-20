@@ -153,7 +153,19 @@ def create_report(payload: ReportIn, request: Request, db: Session = Depends(get
     db.add(report)
     db.commit()
 
-    return ReportOut(id=report_id, url=f"{SITE_URL}/r/{report_id}?token={owner_token}")
+    # 统计今日（北京时间自然日）和累计的提交次数，供 run.sh 在报告链接上方展示
+    now_beijing = datetime.datetime.utcnow() + CN_TZ_OFFSET
+    today_start_beijing = now_beijing.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start_utc = today_start_beijing - CN_TZ_OFFSET
+    today_count = db.query(func.count(Report.id)).filter(Report.submitted_at >= today_start_utc).scalar()
+    total_count = db.query(func.count(Report.id)).scalar()
+
+    return ReportOut(
+        id=report_id,
+        url=f"{SITE_URL}/r/{report_id}?token={owner_token}",
+        today_count=today_count,
+        total_count=total_count,
+    )
 
 
 def spark_path(samples, w=130, h=32):

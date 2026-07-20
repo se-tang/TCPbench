@@ -43,3 +43,5 @@ class ReportIn(BaseModel):
 class ReportOut(BaseModel):
     id: str
     url: str
+    today_count: int
+    total_count: int

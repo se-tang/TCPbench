@@ -108,9 +108,13 @@ CURL_STATUS=$?
 rm -f "$TMP_JSON"
 
 REPORT_URL=$(echo "$RESP" | grep -o '"url":"[^"]*"' | head -1 | cut -d'"' -f4)
+TODAY_COUNT=$(echo "$RESP" | grep -o '"today_count":[0-9]*' | head -1 | cut -d':' -f2)
+TOTAL_COUNT=$(echo "$RESP" | grep -o '"total_count":[0-9]*' | head -1 | cut -d':' -f2)
 
 if [ "$CURL_STATUS" -eq 0 ] && [ -n "$REPORT_URL" ]; then
     echo
+    [ -n "$TODAY_COUNT" ] && [ -n "$TOTAL_COUNT" ] && \
+        echo "  今日已运行 $TODAY_COUNT 次，累计运行 $TOTAL_COUNT 次"
     echo "  ✓ 测试完成，报告链接："
     echo "  $REPORT_URL"
     echo
