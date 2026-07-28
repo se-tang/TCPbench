@@ -4,87 +4,64 @@
 <meta charset="UTF-8">
 <title>排行榜 · TCP Bench</title>
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script>
-// 尽早读取主题偏好并设置，避免切到深色前先闪一下浅色
-(function(){
-  try {
-    var t = localStorage.getItem('tcpbench-theme');
-    if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-  } catch (e) {}
-})();
-</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-  :root {
-    --bg: #f7f8fa; --card: #fff; --border: #e4e7ed;
-    --text: #1a1d23; --dim: #6b7280; --accent: #2563eb;
-    --green: #16a34a; --orange: #ea580c; --red: #dc2626;
-    --row-hover: #f5f6f8;
-  }
-  html[data-theme="dark"] {
-    --bg: #0d1117; --card: #161b22; --border: #30363d;
-    --text: #c9d1d9; --dim: #8b949e; --accent: #58a6ff;
-    --green: #3fb950; --orange: #d29922; --red: #f85149;
-    --row-hover: #1c2128;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 40px 16px; background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-    transition: background .15s, color .15s;
-  }
-  .wrap { max-width: 760px; margin: 0 auto; }
-  .top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; }
-  h1 { font-size: 20px; margin: 0; }
-  .theme-btn {
-    background: var(--card); border: 1px solid var(--border); color: var(--dim);
-    border-radius: 6px; padding: 6px 12px; font-size: 12.5px; cursor: pointer;
-  }
-  .theme-btn:active { opacity: .7; }
-  p.sub { color: var(--dim); margin: 6px 0 4px; font-size: 13.5px; }
-  p.count { color: var(--dim); margin: 0 0 18px; font-size: 12px; }
-  .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
-  .tab {
-    font-size: 13px; padding: 6px 14px; border-radius: 6px; text-decoration: none;
-    color: var(--dim); background: var(--card); border: 1px solid var(--border);
-  }
-  .tab.active { color: #fff; background: var(--accent); border-color: var(--accent); }
-  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 13px; }
-  th { text-align: left; color: var(--dim); font-weight: 500; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; white-space: nowrap; }
-  td { padding: 9px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--row-hover); }
-  tr.filler td { border-bottom-color: transparent; color: transparent; user-select: none; pointer-events: none; }
-  a.row-link { color: var(--text); text-decoration: none; }
-  a.row-link:hover { color: var(--accent); }
-  .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .green { color: var(--green); } .orange { color: var(--orange); } .red { color: var(--red); } .gray { color: var(--dim); }
-  .empty { color: var(--dim); text-align: center; padding: 40px 0; }
-  html { scroll-behavior: smooth; }
-  .pager { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 20px; flex-wrap: wrap; scroll-margin-top: 24px; }
-  .pager a, .pager span {
-    min-width: 30px; text-align: center; padding: 5px 8px; border-radius: 6px; font-size: 12.5px;
-    text-decoration: none; color: var(--dim); border: 1px solid var(--border); background: var(--card);
-  }
-  .pager a:hover { color: var(--accent); }
-  .pager .current { color: #fff; background: var(--accent); border-color: var(--accent); }
-  .pager .ellipsis { border: none; background: none; }
-  .footer { margin-top: 24px; color: var(--dim); font-size: 12px; text-align: center; }
-  .footer a { color: var(--accent); text-decoration: none; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",sans-serif;background:#f5f5f7;color:#1a1a1a;padding:32px 16px;min-height:100vh}
+.wrap{max-width:800px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.top h1{font-size:20px;font-weight:700;margin:0}
+.theme-btn{font-family:inherit;font-size:12px;font-weight:500;padding:6px 14px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;color:#666;cursor:pointer}
+.theme-btn:active{opacity:.7}
+p.sub{color:#999;margin:6px 0 4px;font-size:13px}
+p.count{color:#999;margin:0 0 16px;font-size:12px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{font-size:13px;padding:6px 14px;border-radius:6px;text-decoration:none;color:#666;background:#fff;border:1px solid #e5e7eb}
+.tab.active{color:#fff;background:#2563eb;border-color:#2563eb}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;font-size:13px}
+th{text-align:left;color:#999;font-weight:500;padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid #f3f4f6;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+tr.filler td{border-bottom-color:transparent;color:transparent;user-select:none}
+a.row-link{color:#1a1a1a;text-decoration:none;font-weight:500}
+a.row-link:hover{color:#2563eb}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.green{color:#059669}.orange{color:#d97706}.red{color:#dc2626}.gray{color:#999}
+.empty{color:#999;text-align:center;padding:40px 0}
+.pager{display:flex;justify-content:center;align-items:center;gap:4px;margin-top:20px;flex-wrap:wrap}
+.pager a,.pager span{min-width:30px;text-align:center;padding:5px 8px;border-radius:6px;font-size:12.5px;text-decoration:none;color:#666;border:1px solid #e5e7eb;background:#fff}
+.pager a:hover{color:#2563eb}
+.pager .current{color:#fff;background:#2563eb;border-color:#2563eb}
+.pager .ellipsis{border:none;background:none}
+.footer{margin-top:24px;color:#999;font-size:12px;text-align:center}
+.footer a{color:#2563eb;text-decoration:none}
+html[data-theme="dark"]{background:#0d1117;color:#c9d1d9}
+html[data-theme="dark"] .theme-btn{background:#161b22;border-color:#30363d;color:#8b949e}
+html[data-theme="dark"] .tab{background:#161b22;border-color:#30363d;color:#8b949e}
+html[data-theme="dark"] .tab.active{background:#2563eb;color:#fff}
+html[data-theme="dark"] table{background:#161b22;border-color:#30363d}
+html[data-theme="dark"] th{color:#8b949e;border-color:#30363d}
+html[data-theme="dark"] td{border-color:#21262d}
+html[data-theme="dark"] tr:hover td{background:#1c2128}
+html[data-theme="dark"] a.row-link{color:#c9d1d9}
+html[data-theme="dark"] a.row-link:hover{color:#58a6ff}
+html[data-theme="dark"] .pager a,.pager span{background:#161b22;border-color:#30363d;color:#8b949e}
+html[data-theme="dark"] .pager .current{background:#2563eb;color:#fff}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
-    <h1>排行榜</h1>
+    <h1>🏆 排行榜</h1>
     <button class="theme-btn" id="themeBtn">🌙 深色</button>
   </div>
-  <p class="sub">最近提交的测试结果，IP 已打码，可点击每一行查看完整报告。</p>
+  <p class="sub">最近提交的测试结果，IP 已打码，点击行查看完整报告。</p>
   <p class="count">共 {{ total_count }} 条记录，第 {{ page }} / {{ total_pages }} 页</p>
 
   <div class="tabs">
-    <a class="tab {{ 'active' if sort == 'latency' else '' }}" href="/leaderboard?sort=latency">延迟最优</a>
-    <a class="tab {{ 'active' if sort == 'time' else '' }}" href="/leaderboard?sort=time">最新测试</a>
+    <a class="tab {{ 'active' if sort == 'latency' else '' }}" href="/leaderboard?sort=latency">⚡ 延迟最优</a>
+    <a class="tab {{ 'active' if sort == 'time' else '' }}" href="/leaderboard?sort=time">🕐 最新测试</a>
   </div>
 
   {% if items %}
@@ -102,12 +79,12 @@
     <tbody>
       {% for it in items %}
       <tr>
-        <td class="num" style="color:var(--dim)">{{ it.rank }}</td>
+        <td class="num" style="color:#999">{{ it.rank }}</td>
         <td><a class="row-link" href="/r/{{ it.id }}">{{ it.hostname }}</a></td>
-        <td style="color:var(--dim)">{{ it.ip_masked }}</td>
+        <td style="color:#999">{{ it.ip_masked }}</td>
         <td class="num {{ it.cls }}">{{ "%.2f"|format(it.avg_all) + "ms" if it.avg_all is not none else "—" }}</td>
-        <td class="num" style="color:var(--dim)">{{ it.reachable }}/{{ it.total }}</td>
-        <td class="num" style="color:var(--dim)">{{ it.submitted_at_str }}</td>
+        <td class="num" style="color:#999">{{ it.reachable }}/{{ it.total }}</td>
+        <td class="num" style="color:#999">{{ it.submitted_at_str }}</td>
       </tr>
       {% endfor %}
       {% set filler_count = 20 - items|length %}
@@ -140,6 +117,7 @@
     <a href="/">自己也测一下</a>　·　来自 <a href="https://lucklog.cc" target="_blank">lucklog.cc</a>
   </div>
 </div>
+
 <script>
 (function () {
   var btn = document.getElementById('themeBtn');
