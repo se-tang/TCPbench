@@ -312,6 +312,7 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
             "max_str": f"{r['max']:.3f}ms" if r["max"] is not None else "—",
             "success": r["success"],
             "loss_str": f"{loss:.2f}%" if loss > 0 else "0%",
+            "loss_pct": loss,
             "loss_cls": "high" if loss >= 50 else ("mid" if loss > 0 else ""),
             "cls": lat_cls(r["avg"]),
             "spark": spark_path(r["samples"]),
@@ -338,6 +339,8 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
             "grade": grade,
             "grade_label": gradel,
             "score_pct": pct,
+            "worst_score": scored.index(min(scored)),
+            "worst_name": sorted_results[scored.index(min(scored))]["name"] if scored else "",
         },
     )
 
