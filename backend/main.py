@@ -342,8 +342,16 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
             "grade": grade,
             "grade_label": gradel,
             "score_pct": pct,
-            "worst_score": scored.index(min(scored)),
-            "worst_name": sorted_results[scored.index(min(scored))]["name"] if scored else "",
+            "worst_score": max(
+                (i for i, s in enumerate(scored) if s == min(scored)),
+                key=lambda i: sorted_results[i].get("avg") or 0
+            ),
+            "worst_name": sorted_results[
+                max(
+                    (i for i, s in enumerate(scored) if s == min(scored)),
+                    key=lambda i: sorted_results[i].get("avg") or 0
+                )
+            ]["name"] if scored else "",
         },
     )
 
