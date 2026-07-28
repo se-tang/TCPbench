@@ -99,10 +99,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC
 {% for gname, sitenames in groups.items() %}
 <div class="cat"><div class="ct">{{ gname }}</div><div class="cg">
 {% for r in rows %}{% if r.name in sitenames %}
-{% set lt_cls = 'g' if r.avg and r.avg < 50 else ('o' if r.avg and r.avg < 150 else 'r') %}
+{% set lt_cls = 'g' if r.avg is not none and r.avg < 50 else ('o' if r.avg is not none and r.avg < 150 else 'r') %}
 {% set sc_cls = 'g' if r.score >= 4 else ('o' if r.score >= 2 else 'r') %}
 {% set bar_cls = '#059669' if r.score >= 4 else ('#d97706' if r.score >= 2 else '#dc2626') %}
-{% set bar_w = (r.avg / 300 * 100) if r.avg and r.avg > 0 else 0 %}{% if bar_w > 100 %}{% set bar_w = 100 %}{% endif %}
+{% set bar_w = (r.avg / 300 * 100) if r.avg is not none and r.avg > 0 else 0 %}{% if bar_w > 100 %}{% set bar_w = 100 %}{% endif %}
 <div class="card"><div class="nm"><img src="https://www.google.com/s2/favicons?domain={{ domains.get(r.name, 'google.com') }}&sz=16">{{ r.name }}</div><div class="rw"><span class="lt {{ lt_cls }}">{{ r.avg_str }}</span><span class="sc {{ sc_cls }}">{{ "%.1f"|format(r.score) }}</span></div><div class="bar"><div class="bar-in" style="width:{{ bar_w }}%;background:{{ bar_cls }}"></div></div></div>
 {% endif %}{% endfor %}
 </div></div>

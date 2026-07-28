@@ -308,6 +308,7 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
             "rank": i + 1,
             "name": r["name"],
             "avg_str": f"{r['avg']:.2f}ms" if r["avg"] is not None else "—",
+            "avg": r["avg"],
             "min_str": f"{r['min']:.3f}ms" if r["min"] is not None else "—",
             "max_str": f"{r['max']:.3f}ms" if r["max"] is not None else "—",
             "success": r["success"],
