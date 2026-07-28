@@ -56,7 +56,7 @@ html[data-theme="dark"] .pager .current{background:#2563eb;color:#fff}
     <h1>🏆 排行榜</h1>
     <button class="theme-btn" id="themeBtn">🌙 深色</button>
   </div>
-  <p class="sub">最近提交的测试结果，IP 已打码，点击行查看完整报告。</p>
+  <p class="sub">最近提交的测试结果，点击行查看完整报告。</p>
   <p class="count">共 {{ total_count }} 条记录，第 {{ page }} / {{ total_pages }} 页</p>
 
   <div class="tabs">
@@ -70,7 +70,6 @@ html[data-theme="dark"] .pager .current{background:#2563eb;color:#fff}
       <tr>
         <th>#</th>
         <th>主机</th>
-        <th>IP</th>
         <th class="num">平均延迟</th>
         <th class="num">可达</th>
         <th class="num">时间</th>
@@ -81,7 +80,7 @@ html[data-theme="dark"] .pager .current{background:#2563eb;color:#fff}
       <tr>
         <td class="num" style="color:#999">{{ it.rank }}</td>
         <td><a class="row-link" href="/r/{{ it.id }}">{{ it.hostname }}</a></td>
-        <td style="color:#999">{{ it.ip_masked }}</td>
+        
         <td class="num {{ it.cls }}">{{ "%.2f"|format(it.avg_all) + "ms" if it.avg_all is not none else "—" }}</td>
         <td class="num" style="color:#999">{{ it.reachable }}/{{ it.total }}</td>
         <td class="num" style="color:#999">{{ it.submitted_at_str }}</td>
@@ -90,7 +89,7 @@ html[data-theme="dark"] .pager .current{background:#2563eb;color:#fff}
       {% set filler_count = 20 - items|length %}
       {% if filler_count > 0 %}
         {% for _ in range(filler_count) %}
-        <tr class="filler"><td colspan="6">&nbsp;</td></tr>
+        <tr class="filler"><td colspan="5">&nbsp;</td></tr>
         {% endfor %}
       {% endif %}
     </tbody>
