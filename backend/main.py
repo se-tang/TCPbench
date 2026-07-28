@@ -266,6 +266,41 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
     ok = [r for r in sorted_results if r["avg"] is not None]
     overall_avg = round(sum(r["avg"] for r in ok) / len(ok), 2) if ok else None
 
+    # 动态评分
+    from sqlalchemy import text as sa_text
+    stats_rows = db.execute(sa_text("SELECT name, avg_lat FROM site_stats")).fetchall()
+    stats_map = {r[0]: r[1] for r in stats_rows}
+
+    total_score = 0.0
+    max_score = len(sorted_results) * 5
+    scored = []
+
+    for r in sorted_results:
+        name = r["name"]
+        lat = r["avg"]
+        avg_ref = stats_map.get(name)
+
+        if lat is None or avg_ref is None or avg_ref <= 0:
+            site_score = 0.0
+        else:
+            ratio = lat / avg_ref
+            if ratio <= 0.75:   site_score = 5.0
+            elif ratio <= 0.9:  site_score = 4.0
+            elif ratio <= 1.1:  site_score = 3.0
+            elif ratio <= 1.4:  site_score = 2.0
+            elif ratio <= 2.0:  site_score = 1.0
+            else:               site_score = 0.0
+
+        total_score += site_score
+        scored.append(site_score)
+
+    pct = round(total_score / max_score * 100, 1) if max_score > 0 else 0
+    if pct >= 80:     grade, gradel = "S", "🚀 极速冲浪节点"
+    elif pct >= 65:   grade, gradel = "A", "👍 优秀体验"
+    elif pct >= 50:   grade, gradel = "B", "👌 日常可用"
+    elif pct >= 35:   grade, gradel = "C", "🤔 将就使用"
+    else:             grade, gradel = "D", "😅 不推荐"
+
     rows = []
     for i, r in enumerate(sorted_results):
         loss = r["loss_pct"]
@@ -280,6 +315,7 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
             "loss_cls": "high" if loss >= 50 else ("mid" if loss > 0 else ""),
             "cls": lat_cls(r["avg"]),
             "spark": spark_path(r["samples"]),
+            "score": scored[i],
         })
 
     return templates.TemplateResponse(
@@ -299,6 +335,9 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
             "blog_url": BLOG_URL,
             "is_owner": is_owner,
             "submitted_at_str": to_cn_str(report.submitted_at),
+            "grade": grade,
+            "grade_label": gradel,
+            "score_pct": pct,
         },
     )
 
@@ -306,3 +345,10 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+@app.get("/api/site-stats")
+def get_site_stats(db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    rows = db.execute(text("SELECT name, avg_lat, min_lat, max_lat, sample_count FROM site_stats ORDER BY name")).fetchall()
+    return {r[0]: {"avg": r[1], "min": r[2], "max": r[3], "samples": r[4]} for r in rows}

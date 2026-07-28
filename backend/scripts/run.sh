@@ -10,8 +10,8 @@ ROUNDS=60
 TIMEOUT=5
 PORT=443
 
-NAMES=("NYTimes" "TheGuardian" "CNN" "Vercel" "Reddit" "BBC" "Azure" "Twitch" "Adobe" "TikTok" "Apple" "PayPal" "YahooMail" "Steam" "Bing" "Discord" "Zoom" "GitLab" "Twitter/X" "Udemy" "Cloudflare" "Notion" "Midjourney" "Shopify" "DeepL" "Claude" "ChatGPT" "Perplexity" "Medium" "Copilot" "Coinbase" "Microsoft" "Facebook" "Instagram" "WhatsApp" "Dropbox" "Spotify" "GoogleCloud" "Slack" "Telegram" "GitHub" "Wikipedia" "Gemini" "eBay" "Google" "Stripe" "Gmail" "Netflix" "edX" "YouTube" "AWS" "Coursera" "Trello" "Canva" "ProtonMail" "Figma" "KhanAcademy" "EpicGames" "Amazon" "Outlook" "Xbox" "Oracle" "PlayStation" "Salesforce")
-HOSTS=("www.nytimes.com" "www.theguardian.com" "www.cnn.com" "vercel.com" "www.reddit.com" "www.bbc.com" "azure.microsoft.com" "www.twitch.tv" "www.adobe.com" "www.tiktok.com" "www.apple.com" "www.paypal.com" "mail.yahoo.com" "store.steampowered.com" "www.bing.com" "discord.com" "zoom.us" "gitlab.com" "twitter.com" "www.udemy.com" "www.cloudflare.com" "www.notion.so" "www.midjourney.com" "www.shopify.com" "www.deepl.com" "claude.ai" "chatgpt.com" "www.perplexity.ai" "medium.com" "copilot.microsoft.com" "www.coinbase.com" "www.microsoft.com" "www.facebook.com" "www.instagram.com" "web.whatsapp.com" "www.dropbox.com" "www.spotify.com" "cloud.google.com" "slack.com" "web.telegram.org" "github.com" "www.wikipedia.org" "gemini.google.com" "www.ebay.com" "www.google.com" "stripe.com" "mail.google.com" "www.netflix.com" "www.edx.org" "www.youtube.com" "aws.amazon.com" "www.coursera.org" "trello.com" "www.canva.com" "mail.proton.me" "www.figma.com" "www.khanacademy.org" "www.epicgames.com" "www.amazon.com" "outlook.live.com" "www.xbox.com" "www.oracle.com" "www.playstation.com" "www.salesforce.com")
+NAMES=("NYTimes" "TheGuardian" "CNN" "Vercel" "Reddit" "BBC" "Azure" "Adobe" "TikTok" "Apple" "PayPal" "YahooMail" "Steam" "Discord" "Zoom" "GitLab" "Twitter/X" "Udemy" "Cloudflare" "Notion" "Midjourney" "Shopify" "DeepL" "Claude" "ChatGPT" "Perplexity" "Medium" "Copilot" "Coinbase" "Microsoft" "Facebook" "Instagram" "WhatsApp" "Dropbox" "Spotify" "GoogleCloud" "Slack" "Telegram" "GitHub" "Wikipedia" "Gemini" "eBay" "Google" "Stripe" "Gmail" "Netflix" "edX" "YouTube" "AWS" "Coursera" "Trello" "Canva" "ProtonMail" "Figma" "KhanAcademy" "EpicGames" "Amazon" "Outlook" "Xbox" "Oracle" "PlayStation" "Salesforce" "Twitch" "Grok" "DeepSeek" "HuggingFace" "Poe" "Signal" "Line" "Skype" "Teams" "DigitalOcean" "Vultr" "Hetzner" "Linode" "Netlify" "iCloud")
+HOSTS=("www.nytimes.com" "www.theguardian.com" "www.cnn.com" "vercel.com" "www.reddit.com" "www.bbc.com" "azure.microsoft.com" "www.adobe.com" "www.tiktok.com" "www.apple.com" "www.paypal.com" "mail.yahoo.com" "store.steampowered.com" "discord.com" "zoom.us" "gitlab.com" "twitter.com" "www.udemy.com" "www.cloudflare.com" "www.notion.so" "www.midjourney.com" "www.shopify.com" "www.deepl.com" "claude.ai" "chatgpt.com" "www.perplexity.ai" "medium.com" "copilot.microsoft.com" "www.coinbase.com" "www.microsoft.com" "www.facebook.com" "www.instagram.com" "web.whatsapp.com" "www.dropbox.com" "www.spotify.com" "cloud.google.com" "slack.com" "web.telegram.org" "github.com" "www.wikipedia.org" "gemini.google.com" "www.ebay.com" "www.google.com" "stripe.com" "mail.google.com" "www.netflix.com" "www.edx.org" "www.youtube.com" "aws.amazon.com" "www.coursera.org" "trello.com" "www.canva.com" "mail.proton.me" "www.figma.com" "www.khanacademy.org" "www.epicgames.com" "www.amazon.com" "outlook.live.com" "www.xbox.com" "www.oracle.com" "www.playstation.com" "www.salesforce.com" "grok.com" "chat.deepseek.com" "huggingface.co" "poe.com" "signal.org" "line.me" "skype.com" "teams.microsoft.com" "digitalocean.com" "vultr.com" "hetzner.com" "linode.com" "netlify.com" "icloud.com")
 
 TOTAL=${#NAMES[@]}
 
@@ -95,7 +95,19 @@ for i in "${!NAMES[@]}"; do
 done
 
 echo "  ────────────────────────────────────────────"
+
 echo "  正在上传结果到 $BACKEND_URL ..."
+
+# 检查是否全部失败
+SUCCESS_COUNT=$(echo "$ALL_JSON" | grep -oP '"avg":[0-9]+' | wc -l)
+if [ "$SUCCESS_COUNT" -eq 0 ]; then
+    echo
+    echo "  ✗ 测试失败：所有站点连接超时（延迟全为 0ms）"
+    echo "    请检查 VPS 的出站网络和 443 端口是否通畅。"
+    echo
+    exit 1
+fi
+
 
 TMP_JSON=$(mktemp)
 printf '{"hostname":"%s","ip":"%s","results":[%s]}\n' \

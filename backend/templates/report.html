@@ -3,173 +3,164 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TCP Ping 报告 · {{ report.hostname }}</title>
+<title>TCP Ping · {{ report.hostname }}</title>
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f7f8fa;--surface:#fff;--border:#e4e7ed;--border-faint:#f0f2f5;
-  --t1:#1a1d23;--t2:#6b7280;--t3:#9ca3af;
-  --green:#16a34a;--orange:#ea580c;--red:#dc2626;--blue:#2563eb;
-  --mono:'IBM Plex Mono',monospace;
-  --sans:'IBM Plex Sans SC','PingFang SC',system-ui,sans-serif;
-}
-body{font-family:var(--sans);background:var(--bg);color:var(--t1);font-size:13px;padding:28px 36px 56px;min-height:100vh}
-.page{max-width:1120px;margin:0 auto}
-.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:16px;flex-wrap:wrap}
-.hd h1{font-size:15px;font-weight:500;letter-spacing:.01em;margin-bottom:5px}
-.meta{font-size:11.5px;color:var(--t3);font-family:var(--mono);display:flex;gap:16px;flex-wrap:wrap}
-.meta span{white-space:nowrap}
-.hd-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
-.badge{font-family:var(--sans);font-size:11.5px;font-weight:500;padding:5px 14px;border-radius:5px;background:#f0f2f5;color:var(--t2);border:1px solid var(--border);white-space:nowrap}
-.btn-export{font-family:var(--sans);font-size:11.5px;font-weight:500;padding:5px 14px;border-radius:5px;background:var(--t1);color:#fff;border:none;white-space:nowrap;cursor:pointer}
-.btn-export:active{opacity:.75}
-.cards{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 16px;min-width:120px}
-.card-label{font-size:11px;color:var(--t3);margin-bottom:4px;letter-spacing:.03em}
-.card-value{font-size:19px;font-weight:500;font-family:var(--mono)}
-.card-value.green{color:var(--green)}.card-value.orange{color:var(--orange)}.card-value.red{color:var(--red)}
-.card-sub{font-size:12px;color:var(--t3);margin-top:2px}
-.wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-table{width:100%;border-collapse:collapse}
-thead th{background:#fafbfc;padding:9px 14px;text-align:left;font-size:11.5px;font-weight:500;color:var(--t2);border-bottom:1px solid var(--border);white-space:nowrap;letter-spacing:.02em}
-thead th.c-avg{color:var(--t1)}
-thead th.c-rank{width:38px;text-align:center}
-tbody tr{border-bottom:1px solid var(--border-faint)}
-tbody tr:last-child{border-bottom:none}
-td{padding:7px 14px;white-space:nowrap}
-.c-rank{text-align:center;color:var(--t3);font-family:var(--mono);font-size:11px}
-.c-name{font-weight:500;font-size:13px}
-.c-avg{font-family:var(--mono);font-weight:500;font-size:12.5px}
-.c-num{font-family:var(--mono);font-size:12px;color:var(--t2)}
-.c-loss{font-family:var(--mono);font-size:12px;color:var(--t2)}
-.c-spark{padding:0 14px 0 6px;width:148px;vertical-align:middle}
-.lat-green{color:var(--green)}.lat-orange{color:var(--orange)}.lat-red{color:var(--red)}.lat-gray{color:var(--t3)}
-.loss-mid{color:var(--orange)}.loss-high{color:var(--red)}
-.footer{margin-top:16px;font-size:11px;color:var(--t3);font-family:var(--mono);display:flex;gap:20px;flex-wrap:wrap;align-items:center}
-.leg{display:flex;align-items:center;gap:5px}
-.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
-.own-test{margin-top:22px;font-size:12px;color:var(--t3);text-align:center}
-.own-test a{color:var(--blue);text-decoration:none}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",sans-serif;background:#f5f5f7;padding:16px;display:flex;flex-direction:column;align-items:center}
+#capture{max-width:960px;width:100%;background:#f5f5f7;padding:24px 28px}
+.hdr{display:flex;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.hdr h1{font-size:18px;font-weight:700}
+.hdr .meta{font-size:10.5px;color:#999;text-align:right;line-height:1.5}
+.grade{margin-bottom:16px}
+.gb{border-radius:10px;padding:18px 24px;color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.gb.S{background:linear-gradient(135deg,#059669,#10b981)}.gb.A{background:linear-gradient(135deg,#2563eb,#3b82f6)}.gb.B{background:linear-gradient(135deg,#d97706,#f59e0b)}.gb.C{background:linear-gradient(135deg,#dc2626,#ef4444)}.gb.D{background:linear-gradient(135deg,#6b7280,#9ca3af)}
+.gb-l{display:flex;align-items:center;gap:14px}
+.gb-l .ltr{font-size:40px;font-weight:900;line-height:1}
+.gb-l .t{font-size:14px;font-weight:700}
+.gb-l .d{font-size:11px;opacity:.85;margin-top:1px}
+.gb-r{text-align:right}
+.gb-r .s{font-size:22px;font-weight:700}
+.gb-r .s small{font-size:12px;font-weight:400;opacity:.8}
+.gb-r .x{font-size:10.5px;opacity:.75}
+.sum{display:flex;gap:8px;margin-bottom:18px}
+.si{flex:1;background:#fff;border-radius:6px;padding:8px 12px;border:1px solid #e5e7eb;min-width:0}
+.si .l{font-size:9px;color:#999;text-transform:uppercase}
+.si .v{font-size:16px;font-weight:700;margin-top:1px}
+.si .v.gr{color:#059669}.si .v.re{color:#dc2626}
+.si .s{font-size:9.5px;color:#999}
+.cat{margin-bottom:12px}
+.ct{font-size:11.5px;font-weight:600;color:#333;padding-bottom:4px;border-bottom:1.5px solid #e5e7eb;margin-bottom:5px}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px}
+.card{background:#fff;border-radius:4px;padding:6px 8px;border:1px solid #e5e7eb;display:flex;flex-direction:column;gap:2px}
+.card .nm{font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:3px}
+.card .nm img{width:12px;height:12px;border-radius:1px;flex-shrink:0}
+.card .rw{display:flex;align-items:baseline;gap:5px}
+.card .lt{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.card .lt.g{color:#059669}.card .lt.o{color:#d97706}.card .lt.r{color:#dc2626}
+.card .sc{font-size:9px;font-weight:600}
+.card .sc.g{color:#059669}.card .sc.o{color:#d97706}.card .sc.r{color:#dc2626}
+.card .bar{height:1.5px;border-radius:1px;background:#eee;overflow:hidden}
+.card .bar-in{height:100%;border-radius:1px}
+.bd{margin-top:14px;padding:10px 14px;background:#fff;border-radius:6px;border:1px solid #e5e7eb}
+.bd .bt{font-size:11px;font-weight:600;margin-bottom:4px}
+.bd p{font-size:10.5px;color:#666;line-height:1.5}
+.bar-all{height:14px;border-radius:7px;overflow:hidden;display:flex;margin:5px 0}
+.bar-all .sg{height:100%;display:flex;align-items:center;justify-content:center;font-size:7.5px;color:#fff;font-weight:600}
+.leg{display:flex;flex-wrap:wrap;gap:5px;font-size:9px;color:#666}
+.leg span{display:flex;align-items:center;gap:2px}
+.ld{width:5px;height:5px;border-radius:1px;display:inline-block}
+.ft{display:flex;gap:10px;margin-top:10px;font-size:10px;color:#999;flex-wrap:wrap;padding-bottom:2px}
+.btn{font-family:inherit;font-size:11px;font-weight:600;padding:7px 20px;border-radius:6px;border:none;cursor:pointer;margin-top:10px;background:#1d1d1f;color:#fff}
+.btn:active{opacity:.75}
+.own-test{margin-top:14px;font-size:11px;color:#999;text-align:center}
+.own-test a{color:#2563eb;text-decoration:none}
 </style>
 </head>
 <body>
-<div class="page">
 <div id="capture">
-<div class="hd">
-  <div>
-    <h1>常见网站 TCP ping 延迟测试</h1>
-    <div class="meta">
-      <span>by TCPbench.com</span>
-      {% if blog_url %}<span><a href="{{ blog_url }}" style="color:var(--t3);text-decoration:none" target="_blank">{{ blog_url|replace("https://","")|replace("http://","") }}</a></span>{% endif %}
-      <span>IP：{{ report.ip_masked }}</span>
-      <span>时间：{{ submitted_at_str }} (UTC+8)</span>
-      <span>端口：{{ port }}</span>
-      <span>轮次：{{ rounds }}</span>
-      <span>站点：{{ total }}</span>
+
+<div class="hdr">
+  <div><h1>🌐 TCP Bench · 评测</h1></div>
+  <div class="meta">{{ report.hostname[:20] }}<br>{{ submitted_at_str }} · 443 · 60轮</div>
+</div>
+
+<div class="grade">
+<div class="gb {{ grade }}">
+  <div class="gb-l">
+    <div class="ltr">{{ grade }}</div>
+    <div>
+      <div class="t">{{ grade_label }}</div>
+      <div class="d">{{ reachable }}/{{ total }} 站点可达 · 平均 {{ "%.0f"|format(overall_avg) if overall_avg else "?" }}ms</div>
     </div>
   </div>
-  <div class="hd-actions">
-    <span class="badge">测试完成</span>
-    {% if is_owner %}<button class="btn-export" id="exportBtn">导出图片</button>{% endif %}
+  <div class="gb-r">
+    <div class="s">{{ score_pct }} <small>/ 100</small></div>
+    <div class="x">综合评分</div>
   </div>
 </div>
-<div class="cards">
-  <div class="card">
-    <div class="card-label">整体平均延迟</div>
-    <div class="card-value {{ overall_cls }}">{{ "%.2f"|format(overall_avg) + "ms" if overall_avg is not none else "—" }}</div>
-  </div>
-  <div class="card">
-    <div class="card-label">可达站点</div>
-    <div class="card-value">{{ reachable }}<span class="card-sub"> / {{ total }}</span></div>
-  </div>
-  <div class="card">
-    <div class="card-label">最快</div>
-    <div class="card-value green" style="font-size:15px">{{ best.name if best else "—" }}</div>
-    <div class="card-sub">{{ "%.2f"|format(best.avg) + "ms" if best else "" }}</div>
-  </div>
-  <div class="card">
-    <div class="card-label">最慢（可达）</div>
-    <div class="card-value red" style="font-size:15px">{{ worst.name if worst else "—" }}</div>
-    <div class="card-sub">{{ "%.2f"|format(worst.avg) + "ms" if worst else "" }}</div>
-  </div>
 </div>
-<div class="wrap">
-  <table>
-    <thead>
-      <tr>
-        <th class="c-rank">#</th>
-        <th>服务</th>
-        <th class="c-avg">平均</th>
-        <th>最小</th>
-        <th>最大</th>
-        <th>成功</th>
-        <th>丢包</th>
-        <th>趋势</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td class="c-rank">{{ r.rank }}</td>
-        <td class="c-name">{{ r.name }}</td>
-        <td class="c-avg lat-{{ r.cls }}">{{ r.avg_str }}</td>
-        <td class="c-num">{{ r.min_str }}</td>
-        <td class="c-num">{{ r.max_str }}</td>
-        <td class="c-num">{{ r.success }}</td>
-        <td class="c-loss {{ 'loss-' + r.loss_cls if r.loss_cls else '' }}">{{ r.loss_str }}</td>
-        <td class="c-spark">
-          {% if r.spark %}
-          <svg width="130" height="32" viewBox="0 0 130 32" style="display:block">
-            <path d="{{ r.spark }}" fill="none" stroke="{{ {'green':'#16a34a','orange':'#ea580c','red':'#dc2626','gray':'#94a3b8'}[r.cls] }}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/>
-          </svg>
-          {% else %}
-          <span style="color:#cbd5e1">—</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-<div class="footer">
-  <div class="leg"><span class="dot" style="background:var(--green)"></span>&lt;50ms 优秀</div>
-  <div class="leg"><span class="dot" style="background:var(--orange)"></span>50–150ms 正常</div>
-  <div class="leg"><span class="dot" style="background:var(--red)"></span>&gt;150ms 较慢</div>
-  <span>· TCP SYN→ACK 握手延迟 · 结果按平均延迟升序排列</span>
-</div>
-</div><!-- /capture -->
 
-<div class="own-test">自己也想测测？<a href="/">在自己的 VPS 上跑一下</a>　·　<a href="/leaderboard">查看排行榜</a></div>
+<div class="sum">
+  <div class="si"><div class="l">平均延迟</div><div class="v {{ 'gr' if overall_avg and overall_avg < 50 else ('re' if overall_avg and overall_avg > 150 else '') }}">{{ "%.1f"|format(overall_avg) if overall_avg else "—" }}ms</div></div>
+  <div class="si"><div class="l">可达</div><div class="v gr">{{ reachable }}<span class="s">/{{ total }}</span></div></div>
+  <div class="si"><div class="l">最低分</div><div class="v re">{{ "%.1f"|format(rows|map(attribute='score')|min) }}</div></div>
+  <div class="si"><div class="l">总分</div><div class="v gr">{{ score_pct }}</div></div>
+</div>
+
+{% set domains = {"ChatGPT":"chatgpt.com","Claude":"claude.ai","Gemini":"gemini.google.com","Perplexity":"perplexity.ai","Midjourney":"midjourney.com","Copilot":"copilot.microsoft.com","Grok":"grok.com","DeepSeek":"chat.deepseek.com","HuggingFace":"huggingface.co","Poe":"poe.com","YouTube":"youtube.com","Netflix":"netflix.com","TikTok":"tiktok.com","Twitter/X":"twitter.com","Reddit":"reddit.com","Instagram":"instagram.com","Facebook":"facebook.com","WhatsApp":"whatsapp.com","Discord":"discord.com","Spotify":"spotify.com","Twitch":"twitch.tv","GitHub":"github.com","Vercel":"vercel.com","Notion":"notion.so","Figma":"figma.com","GitLab":"gitlab.com","Cloudflare":"cloudflare.com","Google":"google.com","AWS":"aws.amazon.com","Azure":"azure.microsoft.com","DeepL":"deepl.com","Canva":"canva.com","Netlify":"netlify.com","Telegram":"telegram.org","Zoom":"zoom.us","Slack":"slack.com","Signal":"signal.org","Line":"line.me","Skype":"skype.com","Teams":"teams.microsoft.com","Amazon":"amazon.com","eBay":"ebay.com","PayPal":"paypal.com","Shopify":"shopify.com","Stripe":"stripe.com","Coinbase":"coinbase.com","DigitalOcean":"digitalocean.com","Vultr":"vultr.com","Hetzner":"hetzner.com","Linode":"linode.com","Gmail":"mail.google.com","YahooMail":"yahoo.com","ProtonMail":"proton.me","Outlook":"outlook.live.com","iCloud":"icloud.com"} %}
+
+{% set groups = {
+  "🤖 AI 工具": ["ChatGPT","Claude","Gemini","Perplexity","Midjourney","Copilot","Grok","DeepSeek","HuggingFace","Poe"],
+  "🎬 流媒体 & 社交": ["YouTube","Netflix","TikTok","Twitter/X","Reddit","Instagram","Facebook","WhatsApp","Discord","Spotify","Twitch"],
+  "🛠 开发者 & 生产力": ["GitHub","Vercel","Notion","Figma","GitLab","Cloudflare","Google","AWS","Azure","DeepL","Canva","Netlify"],
+  "💬 实时通讯": ["Telegram","Zoom","Slack","Signal","Line","Skype","Teams"],
+  "🛒 电商 & 云厂商": ["Amazon","eBay","PayPal","Shopify","Stripe","Coinbase","DigitalOcean","Vultr","Hetzner","Linode"],
+  "📧 邮箱 & 其他": ["Gmail","YahooMail","ProtonMail","Outlook","iCloud"]
+} %}
+
+{% for gname, sitenames in groups.items() %}
+<div class="cat">
+<div class="ct">{{ gname }}</div>
+<div class="cg">
+{% for r in rows %}
+{% if r.name in sitenames %}
+{% set s_cls = 'g' if r.avg and r.avg < 50 else ('o' if r.avg and r.avg < 150 else 'r') if r.avg else '' %}
+{% set sc_cls = 'g' if r.score >= 4 else ('o' if r.score >= 2 else 'r') %}
+{% set bar_pct = (r.avg / 200 * 100) if r.avg and r.avg > 0 else 0 %}
+{% set bar_cls = '#059669' if r.score >= 4 else ('#d97706' if r.score >= 2 else '#dc2626') %}
+<div class="card">
+  <div class="nm"><img src="https://www.google.com/s2/favicons?domain={{ domains[r.name] }}&sz=16">{{ r.name }}</div>
+  <div class="rw">
+    <span class="lt {{ s_cls }}">{{ r.avg_str }}</span>
+    <span class="sc {{ sc_cls }}">{{ "%.1f"|format(r.score) }}</span>
+  </div>
+  <div class="bar"><div class="bar-in" style="width:{{ bar_pct if bar_pct < 100 else 100 }}%;background:{{ bar_cls }}"></div></div>
+</div>
+{% endif %}
+{% endfor %}
+</div></div>
+{% endfor %}
+
+<div class="bd">
+  <div class="bt">📊 评分方式</div>
+  <p>每个网站满分 5 分，评分基于该网站历史平均延迟。比历史快得高分，比历史慢得低分。总分 {{ total }}站 × 5 = {{ total * 5 }}。</p>
+  <div class="bar-all">
+    <div class="sg" style="width:76%;background:#059669">S ≥80</div>
+    <div class="sg" style="width:10%;background:#2563eb">A</div>
+    <div class="sg" style="width:7%;background:#d97706">B</div>
+    <div class="sg" style="width:4%;background:#dc2626">C</div>
+    <div class="sg" style="width:3%;background:#6b7280">D</div>
+  </div>
+  <div class="leg">
+    <span><span class="ld" style="background:#059669"></span> S ≥80%</span>
+    <span><span class="ld" style="background:#2563eb"></span> A ≥65%</span>
+    <span><span class="ld" style="background:#d97706"></span> B ≥50%</span>
+    <span><span class="ld" style="background:#dc2626"></span> C ≥35%</span>
+    <span><span class="ld" style="background:#6b7280"></span> D &lt;35%</span>
+  </div>
+</div>
+
+<div class="ft">
+  <span>🟢 &lt;50ms</span><span>🟡 50-150ms</span><span>🔴 &gt;150ms</span>
+  <span style="margin-left:auto">TCP SYN→ACK · {{ port }} · {{ total }}站点</span>
+</div>
 </div>
 
 {% if is_owner %}
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script>
-document.getElementById('exportBtn').addEventListener('click', function () {
-  var btn = this;
-  var original = btn.textContent;
-  btn.textContent = '生成中...';
-  btn.disabled = true;
-  html2canvas(document.getElementById('capture'), {
-    backgroundColor: '#f7f8fa',
-    scale: 2,
-    useCORS: true
-  }).then(function (canvas) {
-    var link = document.createElement('a');
-    link.download = 'tcpping-{{ report.hostname }}.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    btn.textContent = original;
-    btn.disabled = false;
-  }).catch(function () {
-    btn.textContent = '导出失败';
-    setTimeout(function () { btn.textContent = original; btn.disabled = false; }, 1500);
-  });
-});
-</script>
+<button class="btn" onclick="downloadImage()">⬇ 导出图片</button>
 {% endif %}
+<div class="own-test">也想自己测？<a href="/">在 VPS 上跑一下</a> · <a href="/leaderboard">排行榜</a></div>
+
+<script>
+function downloadImage(){
+  var b=document.querySelector('.btn');if(!b)return;
+  b.textContent='生成中...';b.disabled=true;
+  html2canvas(document.getElementById('capture'),{backgroundColor:'#f5f5f7',scale:2,useCORS:true})
+  .then(function(c){var l=document.createElement('a');l.download='tcpping-{{ report.hostname }}.png';l.href=c.toDataURL();l.click();b.textContent='⬇ 导出图片';b.disabled=false})
+  .catch(function(){b.textContent='导出失败';setTimeout(function(){b.textContent='⬇ 导出图片';b.disabled=false},1500)});
+}
+</script>
 </body>
 </html>
