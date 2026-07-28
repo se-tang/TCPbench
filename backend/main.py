@@ -280,8 +280,10 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
         lat = r["avg"]
         avg_ref = stats_map.get(name)
 
-        if lat is None or avg_ref is None or avg_ref <= 0:
+        if lat is None:
             site_score = 0.0
+        elif avg_ref is None or avg_ref <= 0:
+            site_score = 3.0  # 无历史数据，默认基准分
         else:
             ratio = lat / avg_ref
             if ratio <= 0.75:   site_score = 5.0
