@@ -63,7 +63,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC
 <div class="hdr"><div><h1>🌐 TCP Bench · 综合评分</h1></div><div class="meta">{{ report.hostname[:24] }}<br>{{ submitted_at_str }} · 443 · 60轮 · {{ total }}站点</div></div>
 
 <div class="grade"><div class="gb {{ grade|lower }}">
-  <div class="gb-l"><div class="ltr">{{ grade }}</div><div><div class="t">{{ grade_label }}</div><div class="d">AI 及主流网站平均延迟 {{ "%.0f"|format(overall_avg) if overall_avg else "?" }}ms，丢包低于 0.5%</div></div></div>
+  <div class="gb-l"><div class="ltr">{{ grade }}</div><div><div class="t">{{ grade_label }}</div><div class="d">AI 及主流网站平均延迟 {{ "%.0f"|format(overall_avg) if overall_avg else "?" }}ms，丢包 {{ "%.1f"|format(avg_loss) }}%</div></div></div>
   <div class="gb-r"><div class="s">{{ score_pct }} <small>/ 100</small></div><div class="x">综合评分</div></div>
 </div></div>
 
