@@ -301,7 +301,7 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
     elif pct >= 65:   grade, gradel = "A", "👍 优秀体验"
     elif pct >= 50:   grade, gradel = "B", "👌 日常可用"
     elif pct >= 35:   grade, gradel = "C", "🤔 将就使用"
-    else:             grade, gradel = "D", "😅 不推荐"
+    else:             grade, gradel = "D", "🐌 延迟偏高"
 
     rows = []
     for i, r in enumerate(sorted_results):
