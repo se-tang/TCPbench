@@ -209,7 +209,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC
   <span style="margin-left:auto">TCP SYN→ACK · 443端口 · 77站点</span>
 </div>
 </div>
+{% if is_owner %}
 <button class="btn" onclick="downloadImage()">⬇ 导出图片</button>
+{% endif %}
 <script>
 function downloadImage(){
   var b=document.querySelector('.btn');b.textContent='生成中...';b.disabled=true;
