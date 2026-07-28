@@ -117,7 +117,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC
 
 <div class="ft"><span>🟢 <span style="color:#059669">优秀</span></span><span>🟡 <span style="color:#d97706">正常</span></span><span>🔴 <span style="color:#dc2626">较慢</span></span><span style="margin-left:auto">TCP SYN→ACK · 443端口 · {{ total }}站点</span></div>
 </div>
+{% if is_owner %}
 <button class="btn" onclick="downloadImage()">⬇ 导出图片</button>
+{% endif %}
 <script>
 function downloadImage(){
   var b=document.querySelector('.btn');b.textContent='生成中...';b.disabled=true;
