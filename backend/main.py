@@ -358,16 +358,41 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
 
 
 
+import time, threading, functools
+
+_favicon_cache = {}
+_cache_lock = threading.Lock()
+DEFAULT_FAVICON = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAHklEQVQ4T2NkYPj/n4EBDJjRqDGjBoDGI2o0ioMAAL3kBXuEF0wwAAAAAElFTkSuQmCC"
+
+def _fetch_favicon(domain):
+    import urllib.request, base64
+    url = f"https://www.google.com/s2/favicons?domain={domain}&sz=16"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=6) as resp:
+        b64 = base64.b64encode(resp.read()).decode()
+        ctype = resp.headers.get("Content-Type", "image/png")
+        return b64, ctype
+
 @app.get("/favicon-proxy")
 def favicon_proxy(domain: str = Query("google.com")):
-    import urllib.request
-    url = f"https://www.google.com/s2/favicons?domain={domain}&sz=16"
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            return Response(content=resp.read(), media_type=resp.headers.get("Content-Type","image/png"))
-    except:
-        return Response(status_code=404)
+    cache_key = domain.lower().strip()
+    with _cache_lock:
+        if cache_key in _favicon_cache:
+            b64, ctype = _favicon_cache[cache_key]
+        else:
+            try:
+                b64, ctype = _fetch_favicon(domain)
+                _favicon_cache[cache_key] = (b64, ctype)
+            except:
+                b64 = DEFAULT_FAVICON
+                ctype = "image/png"
+                _favicon_cache[cache_key] = (b64, ctype)
+    import base64
+    return Response(
+        content=base64.b64decode(b64),
+        media_type=ctype,
+        headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=604800, immutable"}
+    )
 
 
 @app.get("/health")

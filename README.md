@@ -1,42 +1,44 @@
 # TCP Bench
 
-在你的 VPS 上跑一下访问全球主流网站的真实延迟，看看这台机器上网快不快。
+在你的 VPS 上跑一下访问全球主流网站的真实延迟，看看到底是什么水平。
+
+## 功能亮点
+
+-   对 **Google、GitHub、Netflix、Discord、ChatGPT** 等 **76 个**全球主流站点发起 TCP 连接，测出真实的握手延迟
+-   报告页采用**左右双栏设计**：左侧卡片式综合评分 + 右侧折线趋势数据
+-   **动态评分系统**：每个站点 5 分满分，基于该站点历史平均延迟打分（每月自动更新基准），整体等级 S/A/B/C/D
+-   **导出图片**：一键生成 PNG，支持评分图和趋势图分开下载，CORS 代理直连保证 logo 完整
+-   **IP 隐私保护**：提交前自动隐藏 IP 后两段（如 `192.168.*.*`），排行榜也显示掩码 IP
+-   **排行榜**：主机名、测试 IP、平均延迟、可达率、时间一目了然
+
+## 使用方法
+
+一条命令即可在你的 VPS 上运行测试：
 
 ```bash
 curl -sL https://tcpbench.com/run.sh | bash
 ```
 
-跑完返回一个报告链接，打开就能看到按场景分组的卡片式延迟报告，可以直接分享给别人看。
+跑完之后在终端你会看到一个报告链接，点开就是上面那种漂亮的报告页。
 
-## 这是干什么用的
+## 测试范围
 
-买 VPS 最怕的就是"看起来很美，用起来很卡"。标着同样机房，有的线路刷 YouTube 秒开，有的连网页都打不开。
+76 个网站覆盖 7 个场景：
 
-TCP Bench 对你的 VPS 到 **Google、GitHub、Netflix、Discord、ChatGPT** 等 **76 个**全球主流站点发起 TCP 连接，记录握手耗时，给出一份真实可参考的访问速度报告。不管这些站点套没套 CDN——你实际连的就是这些域名，测的就是你的真实上网体验。
+-   **🤖 AI 工具**：ChatGPT、Claude、Gemini、Perplexity、Midjourney、Copilot、Grok、DeepSeek、HuggingFace、Poe
+-   **🎬 流媒体 & 社交**：YouTube、Netflix、TikTok、Twitter/X、Reddit、Instagram、Facebook、WhatsApp、Discord、Spotify、Twitch、NYTimes 等
+-   **🛠 开发者**：GitHub、Vercel、Cloudflare、Google、AWS、Azure、Notion、Figma 等
+-   **💬 实时通讯**：Telegram、Discord、Zoom、Slack、Signal、Line、Skype、Teams
+-   **🛒 电商 & 云厂商**：Amazon、eBay、PayPal、Stripe、Hetzner、DigitalOcean、Vultr 等
+-   **📧 邮箱**：Gmail、Outlook、ProtonMail、YahooMail、Apple、Dropbox
+-   **📚 资讯 & 教育**：Wikipedia、Medium、Udemy、Coursera、edX、KhanAcademy
 
-## 用起来什么样
+总共 76 个网站，每个满分 5 分。评分基于该网站的**历史平均延迟**（排行榜统计）：比历史快得高分，比历史慢得低分。平均值每月 1 号自动更新，数据越多越准。
 
-1. 在 VPS 上执行上面那条命令
-2. 脚本依次测试 76 个站点，每个采样 60 次，实时打印进度
-3. 测完自动上传，返回报告链接
-4. 报告页：
-   - **S/A/B/C/D 综合评分** — 基于每个站点自身历史平均动态打分
-   - **8 大场景分组** — AI 工具 / 流媒体 & 社交 / 开发者 / 实时通讯 / 电商 & 云厂商 / 邮箱 / 资讯 & 教育
-   - **卡片式布局** — 每个站点一张卡片，带 logo、延迟颜色、得分、进度条
-5. 右上角「导出图片」可存 PNG，发论坛或群里
+## 评分等级
 
-如果所有站点都连不上（延迟全 0ms），脚本会提示"测试失败"并退出，不生成链接。
-
-## 为什么不用 Speedtest
-
-Speedtest 测带宽，TCP Bench 测**你实际访问这些网站时的握手延迟**，更能反映日常上网体验。
-
-## 评分方式
-
-76 个网站，每个满分 5 分。评分基于该网站的**历史平均延迟**（排行榜统计）：比历史快得高分，比历史慢得低分。平均值每月 1 号自动更新，数据越多越准。
-
-| 等级 | 得分 | 含义 |
-|:----:|:----:|:----|
+| 等级 | 得分比例 | 标签 |
+|:----:|:--------:|:-----|
 | S | ≥80% | 🚀 极速冲浪节点 |
 | A | ≥65% | 👍 优秀体验 |
 | B | ≥50% | 👌 日常可用 |
@@ -45,20 +47,29 @@ Speedtest 测带宽，TCP Bench 测**你实际访问这些网站时的握手延�
 
 ## 隐私
 
-- 脚本在你自己 VPS 上本地执行，**不需要任何账号、密码或密钥**
-- 上传前 IP 自动打码（如 `1.2.*.*`）
-- 只包含延迟数据和打码 IP
-- 源码完全公开
+-   测试脚本在本地执行，IP 后两段自动隐藏
+-   不上传任何敏感信息
+-   脚本源码完全公开，建议先看一眼再跑
 
-## 环境要求
+## 自部署
 
-- Linux，bash 3.2+
-- 出站 443 端口通畅
+如果你想把 tcpbench 部署到自己的服务器：
 
-## 自己部署
+```bash
+git clone https://github.com/se-tang/TCPbench.git
+cd TCPbench/backend
 
-想用自己的域名搭一套，详见 [DEPLOY.md](./DEPLOY.md)。技术栈 FastAPI + PostgreSQL。
+# 配置 PostgreSQL + .env
+cp .env.example .env
+# 编辑 .env 填上你的 DATABASE_URL、SITE_URL 等
 
-## License
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
 
-MIT
+## 技术栈
+
+-   **后端**: FastAPI + SQLAlchemy + PostgreSQL
+-   **前端**: Jinja2 模板 + CSS Grid/Column 布局 + html2canvas 导出
+-   **测试脚本**: 纯 Bash (`/dev/tcp`)，零依赖
+-   **favicon 代理**: 服务端缓存 + CORS 直连
