@@ -1,6 +1,6 @@
 # TCP Bench
 
-n![综合评分](screenshots/report-score.jpg)
+![综合评分](screenshots/report-score.jpg)
 
 ![数据趋势](screenshots/report-trend.jpg)
 在你的 VPS 上跑一下访问全球主流网站的真实延迟，看看到底是什么水平。
