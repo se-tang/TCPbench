@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, Response
+from fastapi import Query
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -354,6 +355,19 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
             ]["name"] if scored else "",
         },
     )
+
+
+
+@app.get("/favicon-proxy")
+def favicon_proxy(domain: str = Query("google.com")):
+    import urllib.request
+    url = f"https://www.google.com/s2/favicons?domain={domain}&sz=16"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return Response(content=resp.read(), media_type=resp.headers.get("Content-Type","image/png"))
+    except:
+        return Response(status_code=404)
 
 
 @app.get("/health")
