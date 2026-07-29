@@ -1,8 +1,5 @@
 # TCP Bench
 
-![综合评分](screenshots/report-score.jpg)
-
-![数据趋势](screenshots/report-trend.jpg)
 在你的 VPS 上跑一下访问全球主流网站的真实延迟，看看到底是什么水平。
 
 ## 功能亮点
@@ -23,6 +20,10 @@ curl -sL https://tcpbench.com/run.sh | bash
 ```
 
 跑完之后在终端你会看到一个报告链接，点开就是上面那种漂亮的报告页。
+
+![综合评分](screenshots/tcpping-1785335358526_score.png)
+
+![数据趋势](screenshots/tcpping-1785335358527_trend.png)
 
 ## 测试范围
 
