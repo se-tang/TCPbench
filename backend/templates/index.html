@@ -55,6 +55,8 @@
   li code { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; color: var(--code-fg); font-size: 12.5px; }
   .footer { margin-top: 40px; color: var(--dim); font-size: 13px; }
   .footer a { color: var(--accent); text-decoration: none; }
+
+.site-footer{display:flex;justify-content:center;margin-top:18px;padding:12px 0;font-size:13px;gap:8px;color:#9ca3af}.site-footer a{color:#4b5563;text-decoration:none;font-weight:500}.site-footer a:hover{color:#111827}.site-footer span{color:#d1d5db}
 </style>
 </head>
 <body>
@@ -79,11 +81,7 @@
     <li><b>透明可信</b>：脚本源码完全公开，建议执行前先查看内容，不放心可以逐行核对再运行</li>
   </ul>
 
-  <div class="footer">
-    源码信息见：<a href="https://github.com/se-tang/TCPbench" target="_blank">Github</a>　·　
-    <a href="/leaderboard">排行榜</a>　·
-    来自 <a href="https://lucklog.cc" target="_blank">lucklog.cc</a>
-  </div>
+  
 </div>
 <script>
 function copyCmd() {
@@ -114,16 +112,17 @@ function copyCmd() {
   });
 })();
 </script>
+
+</div>
+
 <div class="site-footer">
-  <div class="footer-links">
-    <a href="https://github.com/se-tang/TCPbench" target="_blank">📦 GitHub</a>
-    <span class="footer-sep">·</span>
-    <a href="/leaderboard">📊 排行榜</a>
-    <span class="footer-sep">·</span>
-    <a href="https://lucklog.cc" target="_blank">🍀 Lucklog.cc</a>
-    <span class="footer-sep">·</span>
-    <a href="/run.sh">⚡ 自己也测一下</a>
-  </div>
+  <a href="https://github.com/se-tang/TCPbench" target="_blank">📦 Github</a>
+  <span>·</span>
+  <a href="/leaderboard">📊 排行榜</a>
+  <span>·</span>
+  <a href="https://lucklog.cc" target="_blank">🍀 lucklog.cc</a>
+  <span>·</span>
+  <a href="/">⚡ 自己也测一下</a>
 </div>
 </body>
 </html>

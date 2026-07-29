@@ -94,6 +94,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);padding:20px;d
 .btn{font-family:inherit;font-size:12px;font-weight:600;padding:9px 26px;border-radius:8px;border:none;cursor:pointer;background:var(--t1);color:#fff;transition:.2s}
 .btn:hover{opacity:.85}
 .btn:disabled{opacity:.6}
+
+.site-footer{display:flex;justify-content:center;margin-top:18px;padding:12px 0;font-size:13px;gap:8px;color:#9ca3af}.site-footer a{color:#4b5563;text-decoration:none;font-weight:500}.site-footer a:hover{color:#111827}.site-footer span{color:#d1d5db}
 </style>
 </head>
 <body>
@@ -260,15 +262,17 @@ document.getElementById('exportBtn').addEventListener('click', async function(){
 });
 {% endif %}
 </script>
+
 <div class="site-footer">
-  <div class="footer-links">
-    <a href="https://github.com/se-tang/TCPbench" target="_blank">📦 GitHub</a>
-    <span class="footer-sep">·</span>
-    <a href="/leaderboard">📊 排行榜</a>
-    <span class="footer-sep">·</span>
-    <a href="https://lucklog.cc" target="_blank">🍀 Lucklog.cc</a>
-    <span class="footer-sep">·</span>
-    <a href="/run.sh">⚡ 自己也测一下</a>
-  </div>
+  <a href="https://github.com/se-tang/TCPbench" target="_blank">📦 Github</a>
+  <span>·</span>
+  <a href="/leaderboard">📊 排行榜</a>
+  <span>·</span>
+  <a href="https://lucklog.cc" target="_blank">🍀 lucklog.cc</a>
+  <span>·</span>
+  <a href="/">⚡ 自己也测一下</a>
 </div>
 </div>
+</div>
+</body>
+</html>

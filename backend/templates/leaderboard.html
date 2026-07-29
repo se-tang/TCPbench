@@ -34,8 +34,8 @@ a.row-link:hover{color:#2563eb}
 .pager a:hover{color:#2563eb}
 .pager .current{color:#fff;background:#2563eb;border-color:#2563eb}
 .pager .ellipsis{border:none;background:none}
-.footer{margin-top:24px;color:#999;font-size:12px;text-align:center}
-.footer a{color:#2563eb;text-decoration:none}
+
+
 html[data-theme="dark"]{background:#0d1117;color:#c9d1d9}
 html[data-theme="dark"] .theme-btn{background:#161b22;border-color:#30363d;color:#8b949e}
 html[data-theme="dark"] .tab{background:#161b22;border-color:#30363d;color:#8b949e}
@@ -48,6 +48,8 @@ html[data-theme="dark"] a.row-link{color:#c9d1d9}
 html[data-theme="dark"] a.row-link:hover{color:#58a6ff}
 html[data-theme="dark"] .pager a,.pager span{background:#161b22;border-color:#30363d;color:#8b949e}
 html[data-theme="dark"] .pager .current{background:#2563eb;color:#fff}
+
+.site-footer{display:flex;justify-content:center;margin-top:18px;padding:12px 0;font-size:13px;gap:8px;color:#9ca3af}.site-footer a{color:#4b5563;text-decoration:none;font-weight:500}.site-footer a:hover{color:#111827}.site-footer span{color:#d1d5db}
 </style>
 </head>
 <body>
@@ -114,9 +116,7 @@ html[data-theme="dark"] .pager .current{background:#2563eb;color:#fff}
   <div class="empty">还没有人提交测试结果</div>
   {% endif %}
 
-  <div class="footer">
-    <a href="/">自己也测一下</a>　·　来自 <a href="https://lucklog.cc" target="_blank">lucklog.cc</a>
-  </div>
+  
 </div>
 
 <script>
@@ -140,27 +140,19 @@ html[data-theme="dark"] .pager .current{background:#2563eb;color:#fff}
   });
 })();
 </script>
-<div class="site-footer">
-  <div class="footer-links">
-    <a href="https://github.com/se-tang/TCPbench" target="_blank">📦 GitHub</a>
-    <span class="footer-sep">·</span>
-    <a href="/leaderboard">📊 排行榜</a>
-    <span class="footer-sep">·</span>
-    <a href="https://lucklog.cc" target="_blank">🍀 Lucklog.cc</a>
-    <span class="footer-sep">·</span>
-    <a href="/run.sh">⚡ 自己也测一下</a>
-  </div>
+
 </div>
+
+</div>
+
 <div class="site-footer">
-  <div class="footer-links">
-    <a href="https://github.com/se-tang/TCPbench" target="_blank">📦 GitHub</a>
-    <span class="footer-sep">·</span>
-    <a href="/leaderboard">📊 排行榜</a>
-    <span class="footer-sep">·</span>
-    <a href="https://lucklog.cc" target="_blank">🍀 Lucklog.cc</a>
-    <span class="footer-sep">·</span>
-    <a href="/run.sh">⚡ 自己也测一下</a>
-  </div>
+  <a href="https://github.com/se-tang/TCPbench" target="_blank">📦 Github</a>
+  <span>·</span>
+  <a href="/leaderboard">📊 排行榜</a>
+  <span>·</span>
+  <a href="https://lucklog.cc" target="_blank">🍀 lucklog.cc</a>
+  <span>·</span>
+  <a href="/">⚡ 自己也测一下</a>
 </div>
 </body>
 </html>
