@@ -229,22 +229,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);padding:20px;d
 
 </div>
 
-<div style="display:flex;justify-content:center;gap:20px;margin-top:12px;font-size:11px">
-  <a href="/run.sh" style="color:#6b7280;text-decoration:none">⚡ 自己也测一下</a>
-  <a href="https://lucklog.cc" style="color:#6b7280;text-decoration:none" target="_blank">🍀 来自 Lucklog.cc</a>
-  <a href="/leaderboard" style="color:#6b7280;text-decoration:none">📊 返回排行榜</a>
-</div>
+
 
 {% if is_owner %}
 <div class="export-zone"><button class="btn" id="exportBtn">⬇ 导出图片</button></div>
 {% endif %}
 
 <script>
-<div style="display:flex;justify-content:center;gap:20px;margin-top:12px;font-size:11px">
-  <a href="/run.sh" style="color:#6b7280;text-decoration:none">⚡ 自己也测一下</a>
-  <a href="https://lucklog.cc" style="color:#6b7280;text-decoration:none" target="_blank">🍀 来自 Lucklog.cc</a>
-  <a href="/leaderboard" style="color:#6b7280;text-decoration:none">📊 返回排行榜</a>
-</div>
+
 
 {% if is_owner %}
 document.getElementById('exportBtn').addEventListener('click', async function(){
@@ -268,3 +260,15 @@ document.getElementById('exportBtn').addEventListener('click', async function(){
 });
 {% endif %}
 </script>
+<div class="site-footer">
+  <div class="footer-links">
+    <a href="https://github.com/se-tang/TCPbench" target="_blank">📦 GitHub</a>
+    <span class="footer-sep">·</span>
+    <a href="/leaderboard">📊 排行榜</a>
+    <span class="footer-sep">·</span>
+    <a href="https://lucklog.cc" target="_blank">🍀 Lucklog.cc</a>
+    <span class="footer-sep">·</span>
+    <a href="/run.sh">⚡ 自己也测一下</a>
+  </div>
+</div>
+</div>
