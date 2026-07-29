@@ -19,7 +19,7 @@
 curl -sL https://tcpbench.com/run.sh | bash
 ```
 
-跑完之后在终端你会看到一个报告链接，点开就是上面那种漂亮的报告页。
+跑完之后在终端你会看到一个报告链接，点开就是下面这样的的报告页。
 
 ![综合评分](screenshots/tcpping-1785335358526_score.png)
 
