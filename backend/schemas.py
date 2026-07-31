@@ -37,6 +37,10 @@ class ReportIn(BaseModel):
             raise ValueError("results 不能为空")
         if len(v) > 200:
             raise ValueError("results 数量超出限制")
+        # 必须完整跑满 60 轮，防止低轮次刷榜
+        for r in v:
+            if r.total != 60:
+                raise ValueError(f"测试无效：站点 {r.name} 轮次为 {r.total}，必须完整跑满 60 轮")
         return v
 
 
