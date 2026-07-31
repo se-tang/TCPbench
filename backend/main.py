@@ -123,6 +123,49 @@ def run_script():
     return content.replace("__BACKEND_URL__", SITE_URL)
 
 
+def _calc_scores(sorted_results, stats_map):
+    """根据历史平均值基准计算每站分数和综合评分（供提交快照与查看共用）"""
+    total_score = 0.0
+    max_score = len(sorted_results) * 5
+    scored = []
+
+    for r in sorted_results:
+        name = r["name"]
+        lat = r["avg"]
+        avg_ref = stats_map.get(name)
+
+        if lat is None:
+            site_score = 0.0
+        elif avg_ref is None or avg_ref <= 0:
+            site_score = 3.0  # 无历史数据，默认基准分
+        else:
+            ratio = lat / avg_ref
+            if ratio <= 0.75:   site_score = 5.0
+            elif ratio <= 0.9:  site_score = 4.0
+            elif ratio <= 1.1:  site_score = 3.0
+            elif ratio <= 1.4:  site_score = 2.0
+            elif ratio <= 2.0:  site_score = 1.0
+            else:               site_score = 0.0
+
+        total_score += site_score
+        scored.append(site_score)
+
+    pct = round(total_score / max_score * 100, 1) if max_score > 0 else 0
+    if pct >= 80:     grade, gradel = "S", "🚀 极速冲浪节点"
+    elif pct >= 65:   grade, gradel = "A", "👍 优秀体验"
+    elif pct >= 50:   grade, gradel = "B", "👌 日常可用"
+    elif pct >= 35:   grade, gradel = "C", "🤔 将就使用"
+    else:             grade, gradel = "D", "🐌 延迟偏高"
+
+    return scored, total_score, pct, grade, gradel
+
+
+def _stats_map(db):
+    from sqlalchemy import text as sa_text
+    rows = db.execute(sa_text("SELECT name, avg_lat FROM site_stats")).fetchall()
+    return {r[0]: r[1] for r in rows}
+
+
 @app.post("/api/report", response_model=ReportOut)
 def create_report(payload: ReportIn, request: Request, db: Session = Depends(get_db)):
     ip = get_client_ip(request)
@@ -145,6 +188,12 @@ def create_report(payload: ReportIn, request: Request, db: Session = Depends(get
 
     owner_token = secrets.token_urlsafe(16)
 
+    # 提交时用当前基准定格评分快照，历史报告分数永不变化
+    sorted_for_score = sorted(
+        [r.dict() for r in payload.results], key=lambda r: (r["avg"] is None, r["avg"] if r["avg"] is not None else 0)
+    )
+    scored, _, score_pct, grade, gradel = _calc_scores(sorted_for_score, _stats_map(db))
+
     report = Report(
         id=report_id,
         owner_token=owner_token,
@@ -155,6 +204,10 @@ def create_report(payload: ReportIn, request: Request, db: Session = Depends(get
         reachable=len(ok_results),
         total=len(payload.results),
         raw=[r.dict() for r in payload.results],
+        score_snapshot=scored,
+        score_pct=score_pct,
+        grade=grade,
+        grade_label=gradel,
     )
     db.add(report)
     db.commit()
@@ -272,42 +325,15 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
     ok = [r for r in sorted_results if r["avg"] is not None]
     overall_avg = round(sum(r["avg"] for r in ok) / len(ok), 2) if ok else None
 
-    # 动态评分
-    from sqlalchemy import text as sa_text
-    stats_rows = db.execute(sa_text("SELECT name, avg_lat FROM site_stats")).fetchall()
-    stats_map = {r[0]: r[1] for r in stats_rows}
-
-    total_score = 0.0
-    max_score = len(sorted_results) * 5
-    scored = []
-
-    for r in sorted_results:
-        name = r["name"]
-        lat = r["avg"]
-        avg_ref = stats_map.get(name)
-
-        if lat is None:
-            site_score = 0.0
-        elif avg_ref is None or avg_ref <= 0:
-            site_score = 3.0  # 无历史数据，默认基准分
-        else:
-            ratio = lat / avg_ref
-            if ratio <= 0.75:   site_score = 5.0
-            elif ratio <= 0.9:  site_score = 4.0
-            elif ratio <= 1.1:  site_score = 3.0
-            elif ratio <= 1.4:  site_score = 2.0
-            elif ratio <= 2.0:  site_score = 1.0
-            else:               site_score = 0.0
-
-        total_score += site_score
-        scored.append(site_score)
-
-    pct = round(total_score / max_score * 100, 1) if max_score > 0 else 0
-    if pct >= 80:     grade, gradel = "S", "🚀 极速冲浪节点"
-    elif pct >= 65:   grade, gradel = "A", "👍 优秀体验"
-    elif pct >= 50:   grade, gradel = "B", "👌 日常可用"
-    elif pct >= 35:   grade, gradel = "C", "🤔 将就使用"
-    else:             grade, gradel = "D", "🐌 延迟偏高"
+    # 动态评分：优先使用提交时定格的快照（历史报告分数不随基准更新变化）
+    if report.score_snapshot:
+        scored = list(report.score_snapshot)
+        pct = report.score_pct if report.score_pct is not None else 0
+        grade = report.grade or "S"
+        gradel = report.grade_label or ""
+    else:
+        # 旧报告没有快照：用当前基准补算一次
+        scored, _, pct, grade, gradel = _calc_scores(sorted_results, _stats_map(db))
 
     rows = []
     for i, r in enumerate(sorted_results):

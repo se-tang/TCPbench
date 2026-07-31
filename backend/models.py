@@ -16,6 +16,10 @@ class Report(Base):
     reachable = Column(Integer, default=0)
     total = Column(Integer, default=0)
     raw = Column(JSON)                                    # 每个站点的完整测试结果（含采样点）
+    score_snapshot = Column(JSON, nullable=True)          # 提交时定格的每站评分快照（scored 数组）
+    score_pct = Column(Float, nullable=True)              # 提交时定格的综合评分百分比
+    grade = Column(String(4), nullable=True)              # 提交时定格的等级 S/A/B/C/D
+    grade_label = Column(String(32), nullable=True)       # 提交时定格的等级标签
 
 
 class SubmissionLog(Base):
