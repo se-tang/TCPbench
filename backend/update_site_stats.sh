@@ -1,5 +1,7 @@
 #!/bin/bash
-docker exec tcpbench-pg psql -U tcpbench -d tcpbench << SQL
+# 每月 1 号（北京时间）重新计算各网站延迟平均值
+# 过滤 0ms（失败）结果
+SQL=$(cat << 'SQL'
 DELETE FROM site_stats WHERE avg_lat <= 0 OR avg_lat IS NULL;
 INSERT INTO site_stats (name, avg_lat, min_lat, max_lat, sample_count, updated_at)
 SELECT 
@@ -20,4 +22,6 @@ ON CONFLICT (name) DO UPDATE SET
     sample_count = EXCLUDED.sample_count,
     updated_at = NOW();
 SQL
+)
+echo "$SQL" | docker exec -i tcpbench-pg psql -U tcpbench -d tcpbench
 echo "[$(date)] site_stats updated (0ms filtered)"
