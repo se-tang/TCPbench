@@ -23,15 +23,27 @@ IP=$(ip route get 8.8.8.8 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="src") p
 tcp_ping() {
     local host=$1 port=$2 timeout=$3
     local t0 t1 elapsed
-    t0=$(date +%s%N 2>/dev/null)
-    [ -z "$t0" ] && { echo "null"; return; }
-    if timeout "$timeout" bash -c "exec 3<>/dev/tcp/$host/$port" 2>/dev/null; then
-        t1=$(date +%s%N)
-        exec 3>&- 2>/dev/null || true
-        elapsed=$(awk "BEGIN{printf \"%.3f\", ($t1-$t0)/1000000}")
-        echo "$elapsed"
+    # 高精度计时：优先 bash EPOCHREALTIME（微秒），兼容 BusyBox date 无 %N 的问题
+    if [ -n "${EPOCHREALTIME+x}" ]; then
+        t0=$EPOCHREALTIME
+        if timeout "$timeout" bash -c "exec 3<>/dev/tcp/$host/$port" 2>/dev/null; then
+            t1=$EPOCHREALTIME
+            elapsed=$(awk "BEGIN{printf \"%.3f\", ($t1-$t0)*1000}")
+            echo "$elapsed"
+        else
+            echo "null"
+        fi
     else
-        echo "null"
+        t0=$(date +%s%N 2>/dev/null)
+        [ -z "$t0" ] && { echo "null"; return; }
+        if timeout "$timeout" bash -c "exec 3<>/dev/tcp/$host/$port" 2>/dev/null; then
+            t1=$(date +%s%N)
+            exec 3>&- 2>/dev/null || true
+            elapsed=$(awk "BEGIN{printf \"%.3f\", ($t1-$t0)/1000000}")
+            echo "$elapsed"
+        else
+            echo "null"
+        fi
     fi
 }
 
