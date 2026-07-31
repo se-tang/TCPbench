@@ -98,11 +98,12 @@ echo "  ────────────────────────
 
 echo "  正在上传结果到 $BACKEND_URL ..."
 
-# 检查是否全部失败
-SUCCESS_COUNT=$(echo "$ALL_JSON" | grep -oP '"avg":[0-9]+' | wc -l)
-if [ "$SUCCESS_COUNT" -eq 0 ]; then
+# 检查是否全部失败或延迟全为 0
+SUCCESS_COUNT=$(echo "$ALL_JSON" | grep -oP '"avg":[0-9]' | wc -l)
+ZERO_AVG_COUNT=$(echo "$ALL_JSON" | grep -oP '"avg":0(\.0+)?[,}]' | wc -l)
+if [ "$SUCCESS_COUNT" -eq 0 ] || [ "$ZERO_AVG_COUNT" -eq "$TOTAL" ]; then
     echo
-    echo "  ✗ 测试失败：所有站点连接超时（延迟全为 0ms）"
+    echo "  ✗ 测试失败：所有站点连接超时或延迟全为 0ms"
     echo "    请检查 VPS 的出站网络和 443 端口是否通畅。"
     echo
     exit 1

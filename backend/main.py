@@ -132,6 +132,11 @@ def create_report(payload: ReportIn, request: Request, db: Session = Depends(get
     db.add(SubmissionLog(ip=ip, created_at=datetime.datetime.utcnow()))
 
     ok_results = [r for r in payload.results if r.avg is not None]
+
+    # 全部失败（0 个成功）或全部成功但延迟全为 0（测试环境异常）→ 拒绝入库
+    if not ok_results or all(r.avg == 0 for r in ok_results):
+        raise HTTPException(status_code=400, detail="测试失败：所有站点延迟为 0ms，请检查网络后重试")
+
     avg_all = round(sum(r.avg for r in ok_results) / len(ok_results), 2) if ok_results else None
 
     report_id = secrets.token_urlsafe(8).replace("_", "").replace("-", "")[:8]
