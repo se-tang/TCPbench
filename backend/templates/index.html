@@ -57,6 +57,42 @@
   .footer a { color: var(--accent); text-decoration: none; }
 
 .site-footer{display:flex;justify-content:center;margin-top:18px;padding:12px 0;font-size:13px;gap:8px;color:#9ca3af}.site-footer a{color:#4b5563;text-decoration:none;font-weight:500}.site-footer a:hover{color:#111827}.site-footer span{color:#d1d5db}
+
+/* =====================================================================
+   移动端（≤768px）—— 桌面端 >768px 不受影响
+   ===================================================================== */
+@media (max-width:768px){
+  body{padding:22px 14px}
+  /* 内容区弹性最大宽度，左右留 padding，避免文字拥挤/重叠 */
+  .wrap{max-width:min(680px,100%);width:100%}
+  .top{gap:12px;align-items:center}
+  h1{font-size:20px;line-height:1.3}
+  p.sub{font-size:13px;line-height:1.7;margin-bottom:4px}
+  .theme-btn{min-height:44px;display:inline-flex;align-items:center;padding:8px 14px}
+
+  /* 命令框：手机改纵向全宽，复制按钮放下方、整行可点 */
+  .cmd-box{
+    flex-direction:column;align-items:stretch;gap:10px;
+    margin:20px 0;padding:14px;
+  }
+  .cmd-box code{
+    font-size:13px;line-height:1.6;white-space:normal;word-break:break-all;
+    overflow-x:visible;
+  }
+  .cmd-box button{
+    min-height:44px;width:100%;font-size:14px;padding:10px 14px;
+  }
+
+  /* 功能说明列表：更大间距与换行控制 */
+  ul{line-height:1.75;padding-left:20px;font-size:13.5px}
+  li{margin-bottom:11px;word-break:break-word}
+  li code{padding:2px 6px;word-break:break-all}
+
+  .footer{margin-top:28px}
+  /* 底部链接：大触控目标、可换行 */
+  .site-footer{flex-wrap:wrap;gap:4px;justify-content:center;margin-top:22px}
+  .site-footer a{min-height:44px;display:inline-flex;align-items:center;padding:0 8px;font-size:13.5px}
+}
 </style>
 </head>
 <body>

@@ -96,6 +96,73 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);padding:20px;d
 .btn:disabled{opacity:.6}
 
 .site-footer{display:flex;justify-content:center;margin-top:18px;padding:12px 0;font-size:13px;gap:8px;color:#9ca3af}.site-footer a{color:#4b5563;text-decoration:none;font-weight:500}.site-footer a:hover{color:#111827}.site-footer span{color:#d1d5db}
+
+/* =====================================================================
+   移动端（≤768px）—— 桌面端 >768px 完全不受影响
+   ★ 报告页外层两列用的是内联 style（display:flex / flex:1.1），
+     内联样式优先级最高，因此这里必须用 !important 才能覆盖。
+   ===================================================================== */
+@media (max-width:768px){
+  body{padding:12px 10px}
+  #capture{max-width:100%;padding:12px 12px}
+
+  /* ① 左右两列 → 垂直堆叠（综合评分在上，数据趋势在下）；消除横向挤压/重叠 */
+  .cols{display:block!important}
+  .col-a,.col-b{flex:none!important;width:100%!important;min-width:0!important}
+  .col-a{margin-bottom:22px}
+
+  /* ② 两个大标题加分隔，区块更清晰 */
+  .col-left h1,.col-right h1{font-size:16px;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+  .col-right h1{margin-top:4px}
+
+  /* ③ 综合评分统计小卡片 → 2 列 */
+  .sum{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  .si{padding:9px 11px;min-width:0}
+  .si .l{font-size:10px}
+  .si .v{font-size:16px}
+  .si .s{font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ④ 数据趋势统计卡片 → 2 列 */
+  .cards2{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  .card2{min-width:0;padding:8px 12px}
+  .card2-value{font-size:15px}
+
+  /* ⑤ 站点卡片网格：5 列 → 2 列（大卡片更好读，文字不截断） */
+  .cg{grid-template-columns:repeat(2,1fr)!important;gap:6px}
+  .card{min-height:52px;padding:8px 10px;border-radius:7px}
+  .card .nm{font-size:11px}
+  .card .nm img{width:14px;height:14px}
+  .card .lt{font-size:14px}
+  .card .sc{font-size:10px}
+  .ct{font-size:12px;margin-bottom:7px}
+
+  /* ⑥ 趋势表：单列（桌面是 column-count 多列 → 手机上压成一列，避免挤压） */
+  .trend-flow{column-count:1!important}
+  .trow{padding:7px 8px;font-size:12px}
+  .tr-name{font-size:12px}
+  .tr-avg{width:56px;font-size:12px}
+  .tr-spark{width:72px}
+  .trend-head{padding:6px 8px;font-size:11px}
+  .trend-head .th-avg{width:56px}
+  .trend-head .th-spark{width:72px}
+  .wrap{padding:4px}
+
+  /* ⑦ 元信息换行更自然 */
+  .col-right .meta{font-size:11.5px;line-height:1.9}
+  .col-right .meta span{white-space:normal;display:inline-block}
+
+  /* ⑧ 分级横幅 & 图例 */
+  .gb{padding:12px 14px}
+  .gb-l .ltr{font-size:30px}
+  .gb-r .s{font-size:17px}
+  .score-legend{padding:9px 12px}
+
+  /* ⑨ 触控目标 ≥44px */
+  .btn{min-height:46px;width:100%;max-width:320px}
+  .export-zone{margin-top:16px}
+  .site-footer{gap:6px;flex-wrap:wrap}
+  .site-footer a{min-height:44px;display:inline-flex;align-items:center;padding:0 4px}
+}
 </style>
 </head>
 <body>
@@ -122,8 +189,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);padding:20px;d
 } %}
 {% set right_cols = 2 if rows|length <= 90 else (3 if rows|length <= 140 else 4) %}
 
-<div style="display:flex;gap:20px;align-items:flex-start">
-<div style="flex:1.1;min-width:0">
+<div class="cols" style="display:flex;gap:20px;align-items:flex-start">
+<div class="col-a" style="flex:1.1;min-width:0">
 
   <!-- ===== LEFT: 综合评分 ===== -->
   <div class="col-left" id="col-left">
@@ -172,9 +239,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--t1);padding:20px;d
     </div>
   </div>
 </div>
-<div style="flex:1;min-width:0">
-
-  <!-- ===== RIGHT: 数据趋势 ===== -->
+<div class="col-b" style="flex:1;min-width:0">
   <div class="col-right" id="col-right">
     <h1>🌐 TCP Bench 数据趋势</h1>
     <div class="meta">

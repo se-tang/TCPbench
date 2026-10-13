@@ -50,6 +50,64 @@ html[data-theme="dark"] .pager a,.pager span{background:#161b22;border-color:#30
 html[data-theme="dark"] .pager .current{background:#2563eb;color:#fff}
 
 .site-footer{display:flex;justify-content:center;margin-top:18px;padding:12px 0;font-size:13px;gap:8px;color:#9ca3af}.site-footer a{color:#4b5563;text-decoration:none;font-weight:500}.site-footer a:hover{color:#111827}.site-footer span{color:#d1d5db}
+
+/* =====================================================================
+   移动端（≤768px）—— 桌面表格布局不受影响
+   表格 → 卡片列表：每条记录一张卡片，无需横向拖动
+   ===================================================================== */
+@media (max-width:768px){
+  body{padding:16px 12px}
+  .wrap{max-width:100%}
+  .top{gap:8px}
+  .top h1{font-size:18px}
+  p.sub{font-size:12.5px}
+  p.count{font-size:11.5px;margin-bottom:12px}
+
+  /* 筛选按钮全宽、44px 触控 */
+  .tabs{gap:8px;margin-bottom:14px}
+  .tab{flex:1;text-align:center;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+
+  /* 表头隐藏、表格拆成卡片 */
+  table{display:block;border:none;background:transparent;font-size:13.5px}
+  thead{display:none}
+  tbody{display:block}
+  tbody tr{
+    display:block;background:#fff;border:1px solid #e5e7eb;border-radius:10px;
+    padding:12px 14px;margin-bottom:10px;
+    box-shadow:0 1px 3px rgba(0,0,0,.04);
+  }
+  tbody tr:hover td{background:transparent}
+  tbody tr.filler{display:none}
+  td{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:5px 0;border-bottom:none;white-space:normal;text-align:right;
+  }
+  /* 值过长时可换行、不撑破卡片 */
+  td > *, td{word-break:break-word;overflow-wrap:anywhere}
+  td::before{
+    content:attr(data-l);flex:0 0 auto;
+    color:#9ca3af;font-size:12px;font-weight:500;text-align:left;
+  }
+  /* 主机行：突出显示、大字号、放卡片顶部 */
+  td[data-l="主机"]{
+    order:-1;font-size:15.5px;font-weight:700;
+    padding-bottom:9px;margin-bottom:5px;border-bottom:1px solid #f0f2f5;
+    align-items:flex-start;
+  }
+  td[data-l="主机"] a.row-link{color:#1a1a1a;text-align:right;min-width:0}
+  td[data-l="#"]{color:#9ca3af;font-size:12px}
+  td[data-l="#"]::before{display:none}
+  td[data-l="#"]{order:-2;justify-content:flex-start}
+
+  .pager a,.pager span{min-width:42px;min-height:42px;display:inline-flex;align-items:center;justify-content:center}
+
+  /* 深色主题下的卡片 */
+  html[data-theme="dark"] tbody tr{background:#161b22;border-color:#30363d}
+  html[data-theme="dark"] td[data-l="主机"]{border-bottom-color:#21262d}
+
+  .site-footer{gap:6px;flex-wrap:wrap}
+  .site-footer a{min-height:44px;display:inline-flex;align-items:center;padding:0 4px}
+}
 </style>
 </head>
 <body>
@@ -79,17 +137,15 @@ html[data-theme="dark"] .pager .current{background:#2563eb;color:#fff}
       </tr>
     </thead>
     <tbody>
-      {% for it in items %}
-      <tr>
-        <td class="num" style="color:#999">{{ it.rank }}</td>
-        <td><a class="row-link" href="/r/{{ it.id }}">{{ it.hostname }}</a></td>
-        <td style="color:#999;font-family:monospace;font-size:11px">{{ it.ip_masked }}</td>
+      {% for it in items %}<tr>
+        <td class="num" data-l="#" style="color:#999">{{ it.rank }}</td>
+        <td data-l="主机"><a class="row-link" href="/r/{{ it.id }}">{{ it.hostname }}</a></td>
+        <td data-l="测试IP" style="color:#999;font-family:monospace;font-size:11px">{{ it.ip_masked }}</td>
         
-        <td class="num {{ it.cls }}">{{ "%.2f"|format(it.avg_all) + "ms" if it.avg_all is not none else "—" }}</td>
-        <td class="num" style="color:#999">{{ it.reachable }}/{{ it.total }}</td>
-        <td class="num" style="color:#999">{{ it.submitted_at_str }}</td>
-      </tr>
-      {% endfor %}
+        <td class="num {{ it.cls }}" data-l="平均延迟">{{ "%.2f"|format(it.avg_all) + "ms" if it.avg_all is not none else "—" }}</td>
+        <td class="num" data-l="可达" style="color:#999">{{ it.reachable }}/{{ it.total }}</td>
+        <td class="num" data-l="时间" style="color:#999">{{ it.submitted_at_str }}</td>
+      </tr>{% endfor %}
       {% set filler_count = 20 - items|length %}
       {% if filler_count > 0 %}
         {% for _ in range(filler_count) %}
