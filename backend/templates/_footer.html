@@ -1,0 +1,24 @@
+<footer class="footer">
+  <div class="footer-credit">
+    <span>TCPBench · 76 endpoints · 60 rounds</span>
+    {% if blog_url %}
+    <span>
+      Powered by
+      <a href="{{ blog_url }}" target="_blank" rel="noreferrer">{{ blog_name or blog_url }}</a>
+    </span>
+    {% else %}
+    <span>Open-source network benchmark</span>
+    {% endif %}
+  </div>
+  <div class="footer-links">
+    <a href="https://github.com/se-tang/TCPbench" target="_blank" rel="noreferrer">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+      GitHub
+    </a>
+    <a href="/leaderboard">排行榜</a>
+    <a class="footer-test-link" href="/">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      自己也测一下
+    </a>
+  </div>
+</footer>

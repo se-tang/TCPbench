@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+{% set page_title = "TCPBench · " ~ report.hostname %}
+{% include "_head.html" %}
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TCPBench">
+<meta property="og:title" content="{{ og_title }}">
+<meta property="og:description" content="{{ og_description }}">
+<meta property="og:url" content="{{ public_report_url }}">
+<meta property="og:image" content="{{ og_image_url }}">
+<meta property="og:image:secure_url" content="{{ og_image_url }}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="TCPBench 综合评分 {{ score_pct }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ og_title }}">
+<meta name="twitter:description" content="{{ og_description }}">
+<meta name="twitter:image" content="{{ og_image_url }}">
+{% if is_owner %}<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>{% endif %}
+</head>
+<body>
+{% set active_page = "report" %}
+{% include "_header.html" %}
+
+{% set domains = {
+"ChatGPT":"chatgpt.com","Claude":"claude.ai","Gemini":"gemini.google.com","Perplexity":"perplexity.ai","Midjourney":"midjourney.com","Copilot":"copilot.microsoft.com","Grok":"grok.com","DeepSeek":"chat.deepseek.com","HuggingFace":"huggingface.co","Poe":"poe.com",
+"YouTube":"youtube.com","Netflix":"netflix.com","TikTok":"tiktok.com","Twitter/X":"twitter.com","Reddit":"reddit.com","Instagram":"instagram.com","Facebook":"facebook.com","WhatsApp":"whatsapp.com","Discord":"discord.com","Spotify":"spotify.com","Twitch":"twitch.tv","NYTimes":"nytimes.com","TheGuardian":"theguardian.com","CNN":"cnn.com","BBC":"bbc.com",
+"GitHub":"github.com","Vercel":"vercel.com","Notion":"notion.so","Figma":"figma.com","GitLab":"gitlab.com","Cloudflare":"cloudflare.com","Google":"google.com","AWS":"aws.amazon.com","Azure":"azure.microsoft.com","DeepL":"deepl.com","Canva":"canva.com","Netlify":"netlify.com","Adobe":"adobe.com","Trello":"trello.com","Microsoft":"microsoft.com","GoogleCloud":"cloud.google.com",
+"Telegram":"telegram.org","Zoom":"zoom.us","Slack":"slack.com","Signal":"signal.org","Line":"line.me","Skype":"skype.com","Teams":"teams.microsoft.com",
+"Amazon":"amazon.com","eBay":"ebay.com","PayPal":"paypal.com","Shopify":"shopify.com","Stripe":"stripe.com","Coinbase":"coinbase.com","DigitalOcean":"digitalocean.com","Vultr":"vultr.com","Hetzner":"hetzner.com","Linode":"linode.com","Steam":"store.steampowered.com","EpicGames":"epicgames.com","PlayStation":"playstation.com","Xbox":"xbox.com","Oracle":"oracle.com","Salesforce":"salesforce.com",
+"Gmail":"mail.google.com","YahooMail":"yahoo.com","ProtonMail":"proton.me","Outlook":"outlook.live.com","Apple":"apple.com","Dropbox":"dropbox.com",
+"Wikipedia":"wikipedia.org","Medium":"medium.com","Udemy":"udemy.com","Coursera":"coursera.org","edX":"edx.org","KhanAcademy":"khanacademy.org"
+} %}
+{% set groups = {
+  "AI 工具": ["ChatGPT","Claude","Gemini","Perplexity","Midjourney","Copilot","Grok","DeepSeek","HuggingFace","Poe"],
+  "流媒体 & 社交": ["YouTube","Netflix","TikTok","Twitter/X","Reddit","Instagram","Facebook","WhatsApp","Discord","Spotify","Twitch","NYTimes","TheGuardian","CNN","BBC"],
+  "开发者 & 生产力": ["GitHub","Vercel","Notion","Figma","GitLab","Cloudflare","Google","AWS","Azure","DeepL","Canva","Netlify","Adobe","Trello","Microsoft","GoogleCloud"],
+  "实时通讯": ["Telegram","Zoom","Slack","Signal","Line","Skype","Teams"],
+  "电商 & 云厂商": ["Amazon","eBay","PayPal","Shopify","Stripe","Coinbase","DigitalOcean","Vultr","Hetzner","Linode","Steam","EpicGames","PlayStation","Xbox","Oracle","Salesforce"],
+  "邮箱 & 其他": ["Gmail","YahooMail","ProtonMail","Outlook","Apple","Dropbox"],
+  "资讯 & 教育": ["Wikipedia","Medium","Udemy","Coursera","edX","KhanAcademy"]
+} %}
+{% set split_at = (rows|length + 1) // 2 %}
+{% set grade_key = grade|lower %}
+{% set has_machine_info = machine and machine.provider and machine.region and machine.plan %}
+{% set show_machine_panel = has_machine_info or (is_owner and claim_open) %}
+
+{% macro trend_column(column_rows) %}
+<div class="trend-column">
+  <div class="trend-head">
+    <span>#</span><span>服务 / 目标 IP</span><span>P50</span><span class="trend-meta-label">评分 / 丢包</span><span>趋势</span>
+  </div>
+  {% for r in column_rows %}
+  <div class="trend-row">
+    <span class="trend-rank">{{ r.rank }}</span>
+    <span class="trend-name" title="{{ r.name }}{% if r.target_ip %} · {{ r.target_ip }}{% endif %}">
+      <span class="trend-name-main">{{ r.name }}</span>
+      <span class="trend-target">{{ r.target_ip or "无地址记录" }}</span>
+    </span>
+    <span class="trend-ms {{ 'slow' if r.avg is not none and r.avg > 70 else '' }}">{{ r.avg_str }}</span>
+    <span class="trend-meta">
+      {% if r.supported %}
+      <span class="trend-rating">{{ "%.1f"|format(r.score) if r.score is not none else "—" }}</span>
+      <span class="trend-success">{{ r.loss_str }}</span>
+      {% else %}
+      <span class="trend-success">不支持</span>
+      {% endif %}
+    </span>
+    <span class="trend-spark">
+      {% if r.spark %}
+      <svg class="sparkline" viewBox="0 0 130 32" fill="none" aria-hidden="true">
+        <path d="{{ r.spark }}" stroke="{{ {'green':'#2fa879','orange':'#b65b21','red':'#b7443d','gray':'#94a3b8'}[r.cls] }}" stroke-width="1.4" stroke-linejoin="round"/>
+      </svg>
+      {% else %}<span class="muted">—</span>{% endif %}
+    </span>
+  </div>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+<main class="page-shell">
+  <nav class="breadcrumb" aria-label="面包屑">
+    <a href="/leaderboard">排行榜</a>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+    <span>测试报告</span>
+  </nav>
+
+  <section class="report-heading">
+    <div>
+      <div class="report-title-row">
+        <h1>{{ report.hostname }}</h1>
+        <span class="status-chip access-chip {{ 'owner' if is_owner else '' }}">
+          {{ "测试者专用链接" if is_owner else "公开报告" }}
+        </span>
+        {% if has_machine_info %}
+        <span class="status-chip">机器已关联</span>
+        {% elif is_owner and claim_open %}
+        <span class="status-chip pending">待补充机器</span>
+        {% else %}
+        <span class="status-chip pending">暂无机器信息</span>
+        {% endif %}
+        {% if is_v2 %}
+        <span class="status-chip family-chip">{{ "IPv4" if ip_family == "v4" else "IPv6" }} 独立口径</span>
+        {% else %}
+        <span class="status-chip pending">旧版混合口径</span>
+        {% endif %}
+      </div>
+      <div class="report-meta">
+        <span class="meta-item">{{ report.ip_masked }}</span>
+        <span class="meta-item">{{ submitted_at_str }}</span>
+        {% if is_v2 %}
+        <span class="meta-item">{{ "IPv4" if ip_family == "v4" else ("IPv6" if ip_family == "v6" else "Mixed") }} · {{ total_sites }} 个站点 · P50</span>
+        {% else %}
+        <span class="meta-item">全部 {{ total }} 个站点 · {{ rounds }} 轮</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="report-actions">
+      {% if is_owner %}
+      <button class="button" id="downloadReportButton" type="button">下载测试图</button>
+      {% endif %}
+      <button class="button" id="copyPublicButton" type="button">复制公开链接</button>
+      <a class="button button-primary" href="/leaderboard">返回排行榜</a>
+    </div>
+  </section>
+
+  {% if family_links|length > 1 %}
+  <nav class="family-switch" aria-label="测试地址族">
+    <span class="family-switch-label">同一测试批次</span>
+    <div class="segmented family-segmented">
+      {% for family_key, link in family_links.items() %}
+      <a class="segment {{ 'active' if link.active else '' }}" href="{{ link.url }}">
+        {{ link.label }}
+      </a>
+      {% endfor %}
+    </div>
+  </nav>
+  {% endif %}
+
+  {% if not is_v2 %}
+  <div class="measurement-note warning">
+    <strong>旧版测量口径：</strong>
+    域名实时连接，DNS 耗时计入连接时间，不参与 v2 排行榜。
+  </div>
+  {% elif unsupported_sites %}
+  <div class="measurement-note">
+    <strong>{{ unsupported_count }} 个站点没有可用 {{ "AAAA" if ip_family == "v6" else "A" }} 记录。</strong>
+    这些站点标记为“不支持 {{ "IPv6" if ip_family == "v6" else "IPv4" }}”，不计失败、不计丢包、不参与本页评分：{{ unsupported_sites|join("、") }}。
+  </div>
+  {% endif %}
+
+  {% if show_machine_panel %}
+  <section class="panel machine-panel" aria-labelledby="machinePanelTitle">
+    <div class="panel-heading">
+      <div>
+        <h2 id="machinePanelTitle">机器信息</h2>
+        <p>公开显示测速者补充的商家与套餐信息。</p>
+      </div>
+      <span class="icon-box">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/></svg>
+      </span>
+    </div>
+    {% if has_machine_info %}
+    <div class="identified-machine">
+      <span class="provider-mark">{{ machine.provider[0]|upper }}</span>
+      <div class="machine-copy">
+        <h3 class="machine-provider">{{ machine.provider }}</h3>
+        <p class="machine-plan">{{ machine.region }} · {{ machine.plan }}</p>
+        {% if machine.note %}<p class="machine-note">{{ machine.note }}</p>{% endif %}
+        <span class="claimed-meta">由测试者提交 · {{ machine_claimed_at_str }}（北京时间）</span>
+      </div>
+    </div>
+    {% if is_owner and claim_open %}
+    <div class="edit-machine-actions">
+      <span>{% if machine_edits_remaining > 0 %}还可修改 {{ machine_edits_remaining }} 次{% else %}编辑次数已用完{% endif %}</span>
+      {% if machine_edits_remaining > 0 %}
+      <button class="button" id="openClaimButton" type="button">编辑机器信息</button>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% elif is_owner and claim_open %}
+    <div class="claim-card">
+      <div class="claim-card-top">
+        <div>
+          <h3 class="claim-card-title">这台机器还没有归属信息</h3>
+          <p class="claim-card-copy">补充后将在公开报告中展示。</p>
+        </div>
+        <span class="countdown" data-remaining="{{ claim_remaining_seconds }}">--:--</span>
+      </div>
+      <button class="button" id="openClaimButton" type="button">补充机器信息</button>
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <div class="report-grid">
+    <section class="panel summary-panel" id="scoreCapture">
+      <div class="grade-band grade-{{ grade_key }}">
+        <span class="grade-letter">{{ grade }}</span>
+        <div class="grade-copy">
+          <h2>{{ grade_label }}</h2>
+          <p>{{ "P50 延迟" if is_v2 else "平均延迟" }} {{ "%.0f"|format(overall_avg) if overall_avg is not none else "?" }}ms，丢包 {{ "%.1f"|format(avg_loss) }}%</p>
+        </div>
+        <div class="grade-score">
+          <strong>{{ "%.1f"|format(score_pct) }}</strong>
+          <small>/ 100 综合评分</small>
+        </div>
+      </div>
+      <div class="summary-metrics">
+        <div class="summary-metric"><span>{{ "P50 延迟" if is_v2 else "平均延迟" }}</span><strong>{{ "%.0f"|format(overall_avg) if overall_avg is not none else "?" }}ms</strong></div>
+        <div class="summary-metric"><span>可达站点</span><strong>{{ reachable }}/{{ total }}</strong></div>
+        <div class="summary-metric"><span>丢包</span><strong>{{ "%.1f"|format(avg_loss) }}%</strong></div>
+        <div class="summary-metric"><span>最快站点</span><strong>{{ "%.2f"|format(best_value) ~ "ms" if best_value is not none else "—" }}</strong><small>{{ best.name if best else "" }}</small></div>
+        <div class="summary-metric"><span>测量地址族</span><strong>{{ "IPv4" if ip_family == "v4" else ("IPv6" if ip_family == "v6" else "Mixed") }}</strong><small title="{{ dns_server }}">{% if dns_server_count %}DNS {{ dns_server_count }} 个地址{% else %}DNS 未记录{% endif %}</small></div>
+      </div>
+      <div class="section-block score-section">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">TCPBench 综合评分图</h2>
+            <p class="section-subtitle">{% if is_v2 %}基于 {{ supported_count }} 个站点的 P50 延迟与丢包率计算。{% else %}基于全部 {{ total }} 个站点的延迟数据计算。{% endif %}</p>
+          </div>
+          <span class="section-note">TCP SYN → ACK · {{ "P50" if is_v2 else "AVG" }}</span>
+        </div>
+        {% for gname, sitenames in groups.items() %}
+        {% set group_rows = rows|selectattr('name', 'in', sitenames)|list %}
+        <div class="site-group">
+          <div class="site-group-heading">
+            <h3 class="site-group-title">{{ gname }}</h3>
+            <span>{{ group_rows|length }} 个已测站点</span>
+          </div>
+          <div class="site-grid">
+            {% for r in group_rows %}
+            {% set rating = r.score %}
+            <div class="site-item">
+              <div class="site-item-main">
+                <img class="site-favicon" crossorigin="anonymous" src="/favicon-proxy?domain={{ domains.get(r.name, 'google.com') }}&amp;v=20261027-1" alt="">
+                <span class="site-name" title="{{ r.name }}">{{ r.name }}</span>
+                <span class="site-rating">{{ "%.1f"|format(rating) if rating is not none else "—" }}</span>
+              </div>
+              <span class="site-latency {{ 'slow' if r.avg is not none and r.avg > 70 else '' }}">{{ r.avg_str }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot"></span>S ≥80%</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#2b66c9"></span>A ≥65%</span>
+          <span class="legend-item"><span class="legend-dot amber"></span>B ≥50%</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#b7443d"></span>C ≥35%</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel trend-panel" id="trendCapture">
+      <div class="test-meta">
+        <div class="test-meta-item"><span>脱敏网段</span><strong>{{ report.ip_masked }}</strong></div>
+        <div class="test-meta-item"><span>地址族</span><strong>{{ "IPv4" if ip_family == "v4" else ("IPv6" if ip_family == "v6" else "混合") }}</strong></div>
+        <div class="test-meta-item"><span>DNS</span><strong title="{{ dns_server }}">{{ dns_server_short or "未记录" }}</strong></div>
+        <div class="test-meta-item"><span>测试端口</span><strong>{{ port }}</strong></div>
+        <div class="test-meta-item"><span>正式样本</span><strong>{{ rounds }} / 站</strong></div>
+        <div class="test-meta-item"><span>测速口径</span><strong>{{ "固定 IP" if is_v2 else "域名连接" }}</strong></div>
+      </div>
+      <div class="trend-section">
+        <div class="section-head trend-title">
+          <div>
+            <h2 class="section-title">TCPBench 数据趋势图</h2>
+            <p class="section-subtitle">全部 {{ rows|length }} 条延迟趋势；超时计入丢包。</p>
+          </div>
+          <span class="section-note">{{ rows|length }} / {{ total_sites }}</span>
+        </div>
+        <div class="trend-table">
+          {{ trend_column(rows[:split_at]) }}
+          {{ trend_column(rows[split_at:]) }}
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot"></span>&lt;50ms 优秀</span>
+          <span class="legend-item"><span class="legend-dot amber"></span>50–150ms</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#b7443d"></span>&gt;150ms</span>
+          <span class="legend-item">超时计入丢包</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {% include "_footer.html" %}
+</main>
+
+{% if is_owner and claim_open %}
+<div class="modal-backdrop" id="claimModal">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="claimModalTitle">
+    <div class="modal-head">
+      <span class="modal-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/></svg>
+      </span>
+      <div class="modal-title-wrap">
+        <h2 class="modal-title" id="claimModalTitle">{% if machine and machine.provider and machine.region and machine.plan %}编辑机器信息{% else %}这台机器是哪款？{% endif %}</h2>
+        <p class="modal-subtitle">完善商家、地区与产品套餐信息。</p>
+      </div>
+      <button class="modal-close" id="closeClaimModal" type="button" aria-label="关闭">×</button>
+    </div>
+    <form class="claim-form" id="claimForm" data-report-id="{{ report.id }}" novalidate>
+      <div class="claim-context">
+        <div class="claim-context-host"><span>测试主机</span><strong>{{ report.hostname }}</strong></div>
+        <span class="countdown" data-remaining="{{ claim_remaining_seconds }}">--:--</span>
+      </div>
+      <div class="form-grid">
+        <label class="field">
+          <span class="field-label">商家 <span class="field-optional">可搜索 / 可新建</span></span>
+          <div class="combo-box" id="providerCombo">
+            <input class="field-input" id="providerInput" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="providerOptions" autocomplete="off" maxlength="64" placeholder="输入或搜索商家" value="{{ machine.provider if machine and machine.provider else '' }}">
+            <div class="combo-menu" id="providerOptions" role="listbox"></div>
+          </div>
+        </label>
+        <label class="field">
+          <span class="field-label">地区 <span class="field-optional">可搜索 / 可新建</span></span>
+          <div class="combo-box" id="regionCombo">
+            <input class="field-input" id="regionInput" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="regionOptions" autocomplete="off" maxlength="64" placeholder="输入或搜索地区" value="{{ machine.region if machine and machine.region else '' }}">
+            <div class="combo-menu" id="regionOptions" role="listbox"></div>
+          </div>
+        </label>
+        <label class="field field-full">
+          <span class="field-label">系列 / 产品 / 套餐 <span class="field-optional">必填</span></span>
+          <input class="field-input" id="planInput" maxlength="128" placeholder="例如：Pro 2C2G、CN2 GIA-E、Lite 套餐" value="{{ machine.plan if machine and machine.plan else '' }}">
+        </label>
+        <label class="field field-full">
+          <span class="field-label">备注 <span class="field-optional">选填 · 最多 200 字</span></span>
+          <textarea class="field-textarea" id="noteInput" maxlength="200" placeholder="例如：10 月补货批次，晚高峰移动线路稳定">{{ machine.note if machine and machine.note else '' }}</textarea>
+        </label>
+      </div>
+      <div class="form-error" id="claimFormError" role="alert"></div>
+      <div class="modal-actions">
+        <button class="button" id="dismissClaimModal" type="button">稍后填写</button>
+        <button class="button button-primary" id="submitClaimButton" type="submit">{% if machine and machine.provider and machine.region and machine.plan %}保存修改{% else %}保存机器信息{% endif %}</button>
+      </div>
+      <p class="modal-note">
+        {% if machine and machine.provider and machine.region and machine.plan %}
+        本次保存会消耗 1 次编辑机会，保存后还可修改 {{ machine_edits_remaining - 1 if machine_edits_remaining > 0 else 0 }} 次。
+        {% else %}
+        首次填写不占用编辑次数；提交后同一 30 分钟窗口内还可修改 {{ machine_edit_limit }} 次。
+        {% endif %}
+      </p>
+    </form>
+  </section>
+</div>
+{% endif %}
+
+<script>
+(function () {
+  function formatRemaining(seconds) {
+    var safe = Math.max(0, Number(seconds) || 0);
+    var minutes = Math.floor(safe / 60);
+    var rest = safe % 60;
+    return String(minutes).padStart(2, '0') + ':' + String(rest).padStart(2, '0');
+  }
+
+  var countdowns = Array.prototype.slice.call(document.querySelectorAll('[data-remaining]'));
+  if (countdowns.length) {
+    var startedAt = Date.now();
+    var initial = countdowns.map(function (node) {
+      return { node: node, seconds: Number(node.dataset.remaining) || 0 };
+    });
+    var timer = window.setInterval(function () {
+      var open = false;
+      initial.forEach(function (item) {
+        var left = Math.max(0, item.seconds - Math.floor((Date.now() - startedAt) / 1000));
+        item.node.textContent = formatRemaining(left);
+        if (left > 0 && item.node.isConnected) open = true;
+      });
+      if (!open) window.clearInterval(timer);
+    }, 1000);
+    initial.forEach(function (item) { item.node.textContent = formatRemaining(item.seconds); });
+  }
+
+  var copyButton = document.getElementById('copyPublicButton');
+  if (copyButton) {
+    copyButton.addEventListener('click', async function () {
+      var url = new URL(window.location.href);
+      url.search = '';
+      url.hash = '';
+      try {
+        await navigator.clipboard.writeText(url.toString());
+        copyButton.textContent = '已复制公开链接';
+      } catch (e) {
+        copyButton.textContent = '复制失败';
+      }
+      window.setTimeout(function () { copyButton.textContent = '复制公开链接'; }, 1400);
+    });
+  }
+
+  var machineOptions = { providers: [], regions: [] };
+
+  function setupCreatableCombo(comboId, inputId, menuId, getItems, emptyLabel) {
+    var combo = document.getElementById(comboId);
+    var input = document.getElementById(inputId);
+    var menu = document.getElementById(menuId);
+    var activeIndex = -1;
+    if (!combo || !input || !menu) return;
+
+    function closeMenu() {
+      menu.classList.remove('is-open');
+      input.setAttribute('aria-expanded', 'false');
+      activeIndex = -1;
+    }
+
+    function choose(value) {
+      input.value = value;
+      closeMenu();
+    }
+
+    function updateActive() {
+      Array.prototype.forEach.call(menu.querySelectorAll('.combo-option'), function (item, index) {
+        item.classList.toggle('active', index === activeIndex);
+      });
+    }
+
+    function renderMenu() {
+      var query = input.value.trim();
+      var normalized = query.toLowerCase();
+      var items = getItems().filter(function (item) {
+        return !normalized || item.toLowerCase().includes(normalized);
+      });
+      menu.innerHTML = '';
+      items.forEach(function (item, index) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'combo-option';
+        button.setAttribute('role', 'option');
+        button.dataset.value = item;
+        button.textContent = item;
+        button.addEventListener('click', function () { choose(item); });
+        button.addEventListener('mousemove', function () {
+          activeIndex = index;
+          updateActive();
+        });
+        menu.appendChild(button);
+      });
+      if (!items.length) {
+        var empty = document.createElement('div');
+        empty.className = 'combo-empty';
+        empty.textContent = query ? '将创建“' + query + '”' : emptyLabel;
+        menu.appendChild(empty);
+      }
+      menu.classList.add('is-open');
+      input.setAttribute('aria-expanded', 'true');
+      activeIndex = items.length ? 0 : -1;
+      updateActive();
+    }
+
+    input.addEventListener('focus', renderMenu);
+    input.addEventListener('input', renderMenu);
+    input.addEventListener('keydown', function (event) {
+      var options = menu.querySelectorAll('.combo-option');
+      if (event.key === 'ArrowDown' && options.length) {
+        event.preventDefault();
+        activeIndex = Math.min(options.length - 1, activeIndex + 1);
+        updateActive();
+      } else if (event.key === 'ArrowUp' && options.length) {
+        event.preventDefault();
+        activeIndex = Math.max(0, activeIndex - 1);
+        updateActive();
+      } else if (event.key === 'Enter' && options.length && menu.classList.contains('is-open')) {
+        event.preventDefault();
+        choose(options[Math.max(0, activeIndex)].dataset.value);
+      } else if (event.key === 'Escape') {
+        closeMenu();
+      }
+    });
+    document.addEventListener('click', function (event) {
+      if (!combo.contains(event.target)) closeMenu();
+    });
+  }
+
+  function loadMachineOptions() {
+    fetch('/api/machine-options')
+      .then(function (response) { return response.ok ? response.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        machineOptions.providers = Array.isArray(data.providers) ? data.providers : [];
+        machineOptions.regions = Array.isArray(data.regions) ? data.regions : [];
+      })
+      .catch(function () {});
+  }
+
+  setupCreatableCombo(
+    'providerCombo',
+    'providerInput',
+    'providerOptions',
+    function () { return machineOptions.providers; },
+    '输入新商家'
+  );
+  setupCreatableCombo(
+    'regionCombo',
+    'regionInput',
+    'regionOptions',
+    function () { return machineOptions.regions; },
+    '输入新地区'
+  );
+  loadMachineOptions();
+
+  var claimModal = document.getElementById('claimModal');
+  var openClaimButton = document.getElementById('openClaimButton');
+  if (claimModal && openClaimButton) {
+    function openClaimModal() {
+      claimModal.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('providerInput').focus();
+    }
+    function closeClaimModal() {
+      claimModal.classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+    openClaimButton.addEventListener('click', openClaimModal);
+    document.getElementById('closeClaimModal').addEventListener('click', closeClaimModal);
+    document.getElementById('dismissClaimModal').addEventListener('click', closeClaimModal);
+    claimModal.addEventListener('click', function (event) {
+      if (event.target === claimModal) closeClaimModal();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && claimModal.classList.contains('is-open')) closeClaimModal();
+    });
+  }
+
+  var claimForm = document.getElementById('claimForm');
+  if (claimForm) {
+    claimForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      var provider = document.getElementById('providerInput').value.trim();
+      var region = document.getElementById('regionInput').value.trim();
+      var plan = document.getElementById('planInput').value.trim();
+      var note = document.getElementById('noteInput').value.trim();
+      var errorNode = document.getElementById('claimFormError');
+      var button = document.getElementById('submitClaimButton');
+      if (provider.length < 2 || region.length < 2 || plan.length < 2) {
+        errorNode.textContent = '请完整填写商家、地区和系列/产品/套餐。';
+        return;
+      }
+      button.disabled = true;
+      button.textContent = '正在保存…';
+      try {
+        var token = new URLSearchParams(window.location.search).get('token') || '';
+        var response = await fetch('/api/reports/' + this.dataset.reportId + '/machine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token, provider: provider, region: region, plan: plan, note: note })
+        });
+        var payload = await response.json().catch(function () { return {}; });
+        if (!response.ok) throw new Error(payload.detail || '保存失败');
+        window.location.reload();
+      } catch (error) {
+        errorNode.textContent = error.message;
+        button.disabled = false;
+        button.textContent = '保存机器信息';
+      }
+    });
+  }
+
+  {% if is_owner %}
+  function capturePanel(elementId, suffix) {
+    return html2canvas(document.getElementById(elementId), {
+      backgroundColor: getComputedStyle(document.body).backgroundColor,
+      scale: 2,
+      useCORS: true,
+      logging: false
+    }).then(function (canvas) {
+      var link = document.createElement('a');
+      link.download = 'tcpbench-' + {{ report.id|tojson }} + '-' + suffix + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  }
+
+  var downloadButton = document.getElementById('downloadReportButton');
+  if (downloadButton) downloadButton.addEventListener('click', async function () {
+    var original = this.textContent;
+    this.disabled = true;
+    this.textContent = '生成中…';
+    try {
+      await capturePanel('scoreCapture', 'score');
+      await capturePanel('trendCapture', 'trend');
+    }
+    finally { this.disabled = false; this.textContent = original; }
+  });
+  {% endif %}
+})();
+</script>
+</body>
+</html>

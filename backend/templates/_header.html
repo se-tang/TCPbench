@@ -1,0 +1,25 @@
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="/" aria-label="TCPBench 首页">
+      <span class="brand-mark">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </span>
+      <span>TCPBench</span>
+      <span class="brand-sub">Network Benchmarks</span>
+    </a>
+    <nav class="main-nav" aria-label="主导航">
+      <a class="nav-link {{ 'active' if active_page == 'home' else '' }}" href="/">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <span>测速</span>
+      </a>
+      <a class="nav-link {{ 'active' if active_page == 'leaderboard' else '' }}" href="/leaderboard">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.7V18h4v-3.3"/><path d="M18 4H6v7a6 6 0 0 0 12 0Z"/></svg>
+        <span>排行榜</span>
+      </a>
+      <button class="nav-link" id="themeToggleBtn" type="button">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <span>深色</span>
+      </button>
+    </nav>
+  </div>
+</header>

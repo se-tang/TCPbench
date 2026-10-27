@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+{% set page_title = "排行榜 · TCPBench" %}
+{% include "_head.html" %}
+</head>
+<body>
+{% set active_page = "leaderboard" %}
+{% include "_header.html" %}
+
+<main class="page-shell">
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">Public Benchmarks</p>
+      <h1>网络质量排行榜</h1>
+      <p class="heading-copy">IPv4、IPv6 与旧版数据分开比较；可按综合评分或最新测试时间浏览。测试者 token 不公开。</p>
+    </div>
+  </section>
+
+  <section class="stats-grid" aria-label="排行榜摘要">
+    <div class="stat">
+      <div class="stat-head"><span>测试总数</span><span class="stat-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+      </span></div>
+      <div class="stat-value">{{ total_count }}<span class="stat-unit">条</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-head"><span>已关联机器</span><span class="stat-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2 2 0 0 0 2.8 0l6.6-6.6a2 2 0 0 0 0-2.8Z"/><circle cx="7" cy="7" r="1"/></svg>
+      </span></div>
+      <div class="stat-value">{{ identified_count }}<span class="stat-unit">条</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-head"><span>平均评分</span><span class="stat-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.7V18h4v-3.3"/><path d="M18 4H6v7a6 6 0 0 0 12 0Z"/></svg>
+      </span></div>
+      <div class="stat-value">{{ "%.1f"|format(average_score) if average_score is not none else "—" }}<span class="stat-unit">/ 100</span></div>
+    </div>
+  </section>
+
+  <section class="leaderboard-family" aria-label="排行榜数据版本">
+    <div>
+      <strong>测量口径</strong>
+      <span>v2 固定目标 IP、按 P50 与丢包评分；旧版混合口径只保留历史查看。</span>
+    </div>
+    <div class="segmented family-segmented">
+      <a class="segment {{ 'active' if family == 'v4' else '' }}" href="/leaderboard?family=v4&sort={{ sort }}">
+        IPv4 <span class="segment-count">{{ family_counts.v4 }}</span>
+      </a>
+      <a class="segment {{ 'active' if family == 'v6' else '' }}" href="/leaderboard?family=v6&sort={{ sort }}">
+        IPv6 <span class="segment-count">{{ family_counts.v6 }}</span>
+      </a>
+      <a class="segment {{ 'active' if family == 'legacy' else '' }}" href="/leaderboard?family=legacy&sort={{ sort }}">
+        旧版 <span class="segment-count">{{ family_counts.legacy }}</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="toolbar" aria-label="排行榜信息">
+    <span class="pagination-copy">共 {{ total_count }} 条记录，第 {{ page }} / {{ total_pages }} 页</span>
+    <div class="segmented" role="group" aria-label="排行榜排序方式">
+      <a class="segment {{ 'active' if sort == 'score' else '' }}" href="/leaderboard?family={{ family }}&sort=score">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.7V18h4v-3.3"/><path d="M18 4H6v7a6 6 0 0 0 12 0Z"/></svg>
+        综合评分
+      </a>
+      <a class="segment {{ 'active' if sort == 'time' else '' }}" href="/leaderboard?family={{ family }}&sort=time">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        最新测试
+      </a>
+    </div>
+  </section>
+
+  <section class="table-surface">
+    {% if items %}
+    <div class="table-scroll">
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th class="col-rank">#</th>
+            <th class="col-machine">机器 / 商家</th>
+            <th class="col-score">综合得分</th>
+            <th class="col-ip">地址族 / 测试 IP</th>
+            <th class="col-latency">平均延迟</th>
+            <th class="col-reach">可达</th>
+            <th class="col-time">测试时间</th>
+            <th class="col-report"><span aria-hidden="true">报告</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in items %}
+          {% set score = it.score if it.score is not none else 0 %}
+          {% set bar_class = 'low' if score < 50 else ('mid' if score < 65 else '') %}
+          <tr>
+            <td class="col-rank"><span class="rank-medal {{ 'top-one' if it.rank == 1 else '' }}">{{ it.rank }}</span></td>
+            <td class="col-machine">
+              <a class="machine-link" href="/r/{{ it.id }}" title="{{ it.hostname }}">{{ it.hostname }}</a>
+              {% if it.provider and it.region and it.plan %}
+              <div class="machine-label known">
+                <span class="machine-label-text">{{ it.provider }}</span><span class="dot"></span><span class="machine-label-text">{{ it.region }}</span><span class="dot"></span><span class="machine-label-text">{{ it.plan }}</span>
+              </div>
+              {% elif it.claim_open %}
+              <div class="machine-label">
+                <span>待补充机器信息</span>
+              </div>
+              {% endif %}
+            </td>
+            <td class="col-score">
+              <div class="score-cell">
+                <span class="score-number">{{ "%.1f"|format(it.score) if it.score is not none else "—" }}</span>
+                {% if it.score is not none %}<span class="score-bar {{ bar_class }}"><span style="width:{{ score }}%"></span></span>{% endif %}
+              </div>
+            </td>
+            <td class="col-ip">
+              <span class="family-badge">{{ "IPv4" if it.family == "v4" else ("IPv6" if it.family == "v6" else "Mixed") }}</span>
+              <span class="mono muted">{{ it.ip_masked }}</span>
+            </td>
+            <td class="col-latency"><span class="latency {{ 'slow' if it.avg_all is not none and it.avg_all > 70 else '' }}">{{ "%.2f"|format(it.avg_all) ~ "ms" if it.avg_all is not none else "—" }}</span></td>
+            <td class="col-reach"><span class="reach-badge">{{ it.reachable }}/{{ it.total }}</span></td>
+            <td class="col-time muted">{{ it.submitted_at_str }}</td>
+            <td class="col-report"><a class="report-arrow" href="/r/{{ it.id }}" aria-label="查看 {{ it.hostname }} 的报告">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <h3>还没有人提交测试结果</h3>
+      <p>运行首页命令后，第一条线路报告会出现在这里。</p>
+    </div>
+    {% endif %}
+
+    {% if total_pages > 1 %}
+    <div class="pagination" id="pager">
+      <span class="pagination-copy">第 {{ page }} / {{ total_pages }} 页</span>
+      <div class="pager">
+        {% if page > 1 %}<a class="page-button" href="/leaderboard?family={{ family }}&sort={{ sort }}&page={{ page - 1 }}#pager" aria-label="上一页">‹</a>{% endif %}
+        {% for p in page_list %}
+          {% if p is none %}<span class="page-button" aria-hidden="true">…</span>
+          {% elif p == page %}<span class="page-button active">{{ p }}</span>
+          {% else %}<a class="page-button" href="/leaderboard?family={{ family }}&sort={{ sort }}&page={{ p }}#pager">{{ p }}</a>{% endif %}
+        {% endfor %}
+        {% if page < total_pages %}<a class="page-button" href="/leaderboard?family={{ family }}&sort={{ sort }}&page={{ page + 1 }}#pager" aria-label="下一页">›</a>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+  {% include "_footer.html" %}
+</main>
+</body>
+</html>

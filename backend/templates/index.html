@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+{% set page_title = "TCPBench · VPS 网络线路质量自助测试" %}
+{% include "_head.html" %}
+</head>
+<body>
+{% set active_page = "home" %}
+{% include "_header.html" %}
+
+<main class="page-shell home-page">
+  <section class="home-hero">
+    <div class="home-hero-copy">
+      <p class="eyebrow">VPS Route Diagnostics</p>
+      <h1>一条命令，看清 VPS 出海线路的真实质量</h1>
+      <p class="home-lede">从你的机器直接探测全球 76 个主流站点，IPv4 与 IPv6 分开采样。固定目标 IP 后以 P50 和丢包率还原线路表现，无需安装依赖。</p>
+
+      <div class="command-console" aria-label="安装命令">
+        <div class="command-console-head">
+          <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></svg>Quick start</span>
+          <span>Bash · IPv4 / IPv6</span>
+        </div>
+        <div class="command-row">
+          <code><span class="command-prompt">$</span><span id="commandText">curl -sL {{ site_url }}/run.sh | bash</span></code>
+          <button class="button command-copy" id="copyCommandButton" type="button">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            复制
+          </button>
+        </div>
+      </div>
+
+      <div class="home-actions">
+        <a class="button button-primary" href="#how-it-works">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          查看运行步骤
+        </a>
+        <a class="button" href="{{ latest_report_url }}">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          查看最新报告
+        </a>
+      </div>
+
+      <div class="trust-row" aria-label="测试特性">
+        <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.7 8.9a1 1 0 0 1-.6 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1 1 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1Z"/><path d="m9 12 2 2 4-4"/></svg>IP 自动脱敏</span>
+        <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>固定目标 IP · 60 个正式样本</span>
+        <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>脚本源码公开</span>
+      </div>
+    </div>
+
+    <aside class="probe-panel" aria-labelledby="probePanelTitle">
+      <div class="probe-panel-head">
+        <div>
+          <p class="probe-kicker">Coverage</p>
+          <h2 id="probePanelTitle">全球探测矩阵</h2>
+        </div>
+        <span class="probe-count">{{ coverage_cells|length or 76 }} endpoints</span>
+      </div>
+      <div class="probe-matrix" role="img" aria-label="最近一次测试的全球站点延迟分布">
+        {% for cell in coverage_cells %}
+        <span class="probe-cell {{ cell.tone }}" title="{{ cell.name }}{% if cell.avg is not none %} · {{ '%.2f'|format(cell.avg) }}ms{% endif %}"></span>
+        {% else %}
+        {% for _ in range(76) %}<span class="probe-cell good"></span>{% endfor %}
+        {% endfor %}
+      </div>
+      <div class="probe-legend">
+        <span><i class="probe-dot excellent"></i>&lt;20ms</span>
+        <span><i class="probe-dot good"></i>20–50ms</span>
+        <span><i class="probe-dot fair"></i>50–80ms</span>
+        <span><i class="probe-dot slow"></i>&gt;80ms</span>
+      </div>
+      <div class="probe-summary">
+        <div><span>最近评分</span><strong>{{ "%.1f"|format(latest_score) if latest_score is not none else "—" }} <small>/ 100</small></strong></div>
+        <div><span>平均延迟</span><strong>{{ "%.2f"|format(latest_avg) if latest_avg is not none else "—" }} <small>ms</small></strong></div>
+        <div><span>可达率</span><strong>{{ "%.0f"|format(latest_reachable / latest_total * 100) if latest_total else "0" }} <small>%</small></strong></div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="home-section" id="how-it-works">
+    <div class="home-section-head">
+      <div>
+        <p class="eyebrow">Workflow</p>
+        <h2>三步拿到完整线路报告</h2>
+      </div>
+      <span class="section-note">在 VPS 终端中执行</span>
+    </div>
+    <div class="workflow-grid">
+      <article class="workflow-step">
+        <span class="step-number">01</span>
+        <span class="step-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></svg></span>
+        <h3>登录 VPS</h3>
+        <p>使用 SSH 登录需要检测的机器，不需要额外安装 Python 或测速组件。</p>
+      </article>
+      <article class="workflow-step">
+        <span class="step-number">02</span>
+        <span class="step-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></span>
+        <h3>粘贴命令</h3>
+        <p>脚本先检测 IPv6 是否真正可用；双栈机器可分别测试 IPv4 与 IPv6，并自动选择延迟更低的候选 IP。</p>
+      </article>
+      <article class="workflow-step">
+        <span class="step-number">03</span>
+        <span class="step-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>
+        <h3>查看报告</h3>
+        <p>机器端返回带 token 的专用链接。测试者可补充机器信息、下载完整测试图；公开排行榜不携带 token。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="home-section home-latest">
+    <div class="home-section-head">
+      <div>
+        <p class="eyebrow">Leaderboard</p>
+        <h2>高分线路</h2>
+      </div>
+      <a class="home-section-link" href="/leaderboard">
+        查看完整排行榜
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+    <div class="home-leaderboard">
+      {% if top_reports %}
+      <div class="home-board-head">
+        <span>排名</span><span>测试主机</span><span>综合评分</span><span>平均延迟</span>
+      </div>
+      {% for item in top_reports %}
+      <a class="home-board-row" href="/r/{{ item.id }}">
+        <span class="home-board-rank">{{ "%02d"|format(loop.index) }}</span>
+        <span class="home-board-machine">
+          <strong>{{ item.hostname }}</strong>
+          <small>{% if item.provider and item.region and item.plan %}{{ item.provider }} · {{ item.region }} · {{ item.plan }}{% else %}暂无机器信息{% endif %}</small>
+        </span>
+        <span class="home-board-score">{{ "%.1f"|format(item.score) if item.score is not none else "—" }}</span>
+        <span class="home-board-latency">{{ "%.2f"|format(item.avg) ~ "ms" if item.avg is not none else "—" }}</span>
+      </a>
+      {% endfor %}
+      {% else %}
+      <div class="empty-state home-loading"><div><h3>还没有测试结果</h3><p>运行上方命令，提交第一条线路报告。</p></div></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="home-assurance" aria-label="数据处理说明">
+    <div class="assurance-item">
+      <span class="assurance-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.7 8.9a1 1 0 0 1-.6 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1 1 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+      <div><strong>本地执行</strong><p>测速过程发生在你的 VPS 上，结果中只展示脱敏后的 IP。</p></div>
+    </div>
+    <div class="assurance-item">
+      <span class="assurance-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+      <div><strong>统一口径</strong><p>固定 443 端口、目标 IP、60 个正式样本，并以 P50 和丢包率计算评分。</p></div>
+    </div>
+    <div class="assurance-item">
+      <span class="assurance-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></span>
+      <div><strong>源码透明</strong><p>脚本与站点清单公开，可以逐行检查后再决定是否执行。</p></div>
+    </div>
+  </section>
+
+  {% include "_footer.html" %}
+</main>
+</body>
+</html>

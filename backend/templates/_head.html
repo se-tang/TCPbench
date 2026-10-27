@@ -1,0 +1,20 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>{{ page_title }}</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<script>
+(function () {
+  try {
+    var theme = localStorage.getItem('tcpbench-theme');
+    document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<link rel="stylesheet" href="/static/theme.css?v=20261020-v3">
+<script defer src="/static/theme.js?v=20261020-v3"></script>
+{% if umami_script_url and umami_website_id %}
+<script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}" data-exclude-search="true" data-exclude-hash="true"></script>
+{% endif %}
