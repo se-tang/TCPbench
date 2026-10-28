@@ -58,6 +58,7 @@
     <span class="trend-name" title="{{ r.name }}{% if r.target_ip %} · {{ r.target_ip }}{% endif %}">
       <span class="trend-name-main">{{ r.name }}</span>
       <span class="trend-target">{{ r.target_ip or "无地址记录" }}</span>
+      {% if r.precheck_status == "failed" and r.sampling_policy == "full60" %}<span class="trend-target">预检失败 · 已正式测试 {{ r.attempted }} 次</span>{% endif %}
     </span>
     <span class="trend-ms {{ 'slow' if r.avg is not none and r.avg > 70 else '' }}">{{ r.avg_str }}</span>
     <span class="trend-meta">

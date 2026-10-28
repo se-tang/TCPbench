@@ -259,8 +259,8 @@ prepare_family() {
 
 run_family_tests() {
     local family=$1
-    local site_round i latency sample_count missing padding progress_index=0
-    local consecutive valid_file p50
+    local site_round i latency sample_count precheck_status progress_index=0
+    local valid_file p50
     local -a samples success
 
     prepare_family "$family"
@@ -278,31 +278,16 @@ run_family_tests() {
             continue
         fi
         if [ "${PRECHECK[$i]}" -eq 0 ]; then
-            samples[$i]=$(printf 'null,%.0s' $(seq 1 60))
-            samples[$i]="${samples[$i]%,}"
-            printf '  [%2d/%d] %-16s  timeout\n' "$progress_index" "$FAMILY_TOTAL" "$name"
-            continue
+            printf '  [%2d/%d] %-16s  预检失败，继续正式测试 %d 次\n' "$progress_index" "$FAMILY_TOTAL" "$name" "$ROUNDS"
         fi
 
         # 预热连接丢弃，避免首个连接的 ARP / 路由 / TCP 缓存冷启动污染 P50。
         tcp_ping "${TARGET_IPS[$i]}" >/dev/null
-        consecutive=0
-        for site_round in $(seq 1 60); do
+        for site_round in $(seq 1 "$ROUNDS"); do
             latency=$(tcp_ping "${TARGET_IPS[$i]}")
             samples[$i]="${samples[$i]}${latency},"
             if [ "$latency" != "null" ]; then
                 success[$i]=$((success[$i] + 1))
-                consecutive=0
-            else
-                consecutive=$((consecutive + 1))
-            fi
-            if [ "$consecutive" -ge 3 ]; then
-                missing=$((60 - site_round))
-                if [ "$missing" -gt 0 ]; then
-                    padding=$(printf 'null,%.0s' $(seq 1 "$missing"))
-                    samples[$i]="${samples[$i]}${padding%,}"
-                fi
-                break
             fi
             sleep 0.08
         done
@@ -313,7 +298,7 @@ run_family_tests() {
             printf '  [%2d/%d] %-16s %8sms\n' \
                 "$progress_index" "$FAMILY_TOTAL" "$name" "$p50"
         else
-            printf '  [%2d/%d] %-16s  timeout\n' \
+            printf '  [%2d/%d] %-16s  正式测试失败\n' \
                 "$progress_index" "$FAMILY_TOTAL" "$name"
         fi
     done
@@ -335,15 +320,10 @@ run_family_tests() {
             if [ -n "${samples[$i]}" ]; then
                 sample_count=$(printf '%s' "${samples[$i]}" | awk -F, '{for (i=1; i<=NF; i++) if ($i != "") count++} END {print count+0}')
             fi
-            if [ "$sample_count" -lt 60 ]; then
-                missing=$((60 - sample_count))
-                padding=$(printf 'null,%.0s' $(seq 1 "$missing"))
-                if [ "$sample_count" -eq 0 ]; then
-                    samples[$i]="${padding%,}"
-                else
-                    samples[$i]="${samples[$i]}${padding%,}"
-                fi
-                sample_csv="${samples[$i]%,}"
+            if [ "$sample_count" -ne "$ROUNDS" ]; then
+                printf '  测试未完成：%s 实际取得 %s/%s 个样本，不上传补齐结果。\n' "$name" "$sample_count" "$ROUNDS" >&2
+                rm -f "$valid_file"
+                return 1
             fi
             printf '%s\n' "$sample_csv" | tr ',' '\n' | awk '$1 != "null" && $1 != "" {print}' > "$valid_file"
             if [ -s "$valid_file" ]; then
@@ -358,6 +338,11 @@ run_family_tests() {
                 row=$(printf '{"name":"%s","host":"%s","target_ip":"%s","dns_ms":%s,"supported":true,"candidate_count":%d,"avg":null,"min":null,"max":null,"p50":null,"success":0,"total":60,"loss_pct":100.00,"samples":[%s]}' \
                     "$(json_str "$name")" "$(json_str "$host")" "$(json_str "$target")" "$dns" "$candidates" "$sample_csv")
             fi
+        fi
+        if [ "$supported" = true ]; then
+            precheck_status=passed
+            [ "${PRECHECK[$i]}" -eq 0 ] && precheck_status=failed
+            row="${row%\}},\"precheck_status\":\"$precheck_status\",\"sampling_policy\":\"full60\",\"attempted\":$sample_count}"
         fi
         rm -f "$valid_file"
         if [ -z "$RESULTS_JSON" ]; then RESULTS_JSON="$row"; else RESULTS_JSON="${RESULTS_JSON},${row}"; fi
@@ -409,7 +394,7 @@ run_one_family() {
     local family=$1
     local ip
     ip=$(get_primary_ip "$family")
-    run_family_tests "$family"
+    run_family_tests "$family" || return 1
     upload_family "$family" "$ip"
 }
 

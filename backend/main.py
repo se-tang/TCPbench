@@ -445,6 +445,10 @@ def _validate_v2_results(payload: ReportIn):
             if item.total != 0 or item.success != 0:
                 raise HTTPException(status_code=422, detail=f"{item.name}: 不支持地址族的数据无效")
             continue
+        if item.sampling_policy == "full60" and (
+            item.attempted != 60 or item.precheck_status is None
+        ):
+            raise HTTPException(status_code=422, detail=f"{item.name}: 完整采样必须实际执行 60 次并记录预检状态")
         if not item.target_ip:
             raise HTTPException(status_code=422, detail=f"{item.name}: 缺少实际测试目标 IP")
         try:
@@ -1069,7 +1073,10 @@ def view_report(report_id: str, request: Request, token: str = None, db: Session
             "dns_ms": r.get("dns_ms"),
             "dns_str": f"{r['dns_ms']:.1f}ms" if r.get("dns_ms") is not None else "—",
             "supported": supported,
-            "avg_str": f"{latency:.2f}ms" if latency is not None else ("不支持" if not supported else "—"),
+            "precheck_status": r.get("precheck_status"),
+            "sampling_policy": r.get("sampling_policy"),
+            "attempted": r.get("attempted"),
+            "avg_str": f"{latency:.2f}ms" if latency is not None else ("不支持" if not supported else ("正式失败" if r.get("sampling_policy") == "full60" else "—")),
             "avg": latency,
             "p50": r.get("p50"),
             "p50_str": f"{r['p50']:.2f}ms" if r.get("p50") is not None else "—",

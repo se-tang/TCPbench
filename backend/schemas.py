@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, validator
 
 
@@ -9,6 +9,9 @@ class SiteResult(BaseModel):
     dns_ms: Optional[float] = None
     supported: bool = True
     candidate_count: int = 0
+    precheck_status: Optional[Literal["passed", "failed"]] = None
+    sampling_policy: Optional[Literal["full60"]] = None
+    attempted: Optional[int] = Field(None, ge=0, le=60)
     avg: Optional[float] = None
     min: Optional[float] = None
     max: Optional[float] = None
